@@ -77,14 +77,19 @@ footer{background:#ebe5dc;padding:55px 0 25px}.foot{display:grid;grid-template-c
         <div class="field"><label>Payment</label><select id="coPayment"><option>Cash on Delivery</option><option>Bank Transfer</option></select></div>
       </div>
       <div class="checkout-total"><span>Order total</span><strong id="coTotal">PKR 0</strong></div>
-      <p class="checkout-note">This demo saves orders in this browser only. It does not process payments. The Admin Panel can view and update these demo orders on the same browser/device.</p>
+      <p class="checkout-note">Orders are securely saved in the LOCA COLLECTION database. Payment is currently recorded as Cash on Delivery or Bank Transfer; no card payment is processed here.</p>
       <button class="btn" style="width:100%;margin-top:14px">Place Order</button>
     </form>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const products=[
+const SUPABASE_URL="https://qvvrjogeqranowfseivh.supabase.co";
+const SUPABASE_KEY="sb_publishable_IP9PzAVXsVwcqNWenmdmLg_ACtzSDMB";
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let products=[];
+const fallbackProducts=[
 {id:1,name:"Noor Relaxed Kurta",cat:"Women",price:6490,old:null,new:true},
 {id:2,name:"Aariz Tailored Shirt",cat:"Men",price:7490,old:null,new:true},
 {id:3,name:"Mira Draped Dress",cat:"Women",price:11990,old:13990,new:true},
@@ -99,26 +104,44 @@ const products=[
 {id:12,name:"Iris Satin Skirt",cat:"Women",price:7990,old:null,new:false}
 ];
 let filter="All",cart=JSON.parse(localStorage.getItem("loca_cart_new")||"[]");
-const money=n=>"PKR "+n.toLocaleString("en-PK");
-function card(p){return `<article class="product"><div class="pic">${p.new?'<small>NEW</small>':''}<button class="heart" onclick="event.stopPropagation();add(${p.id})">♡</button></div><div class="product-info"><span class="category">${p.cat}</span><h3>${p.name}</h3><div class="price">${money(p.price)}${p.old?`<span class="old">${money(p.old)}</span>`:""}</div><button class="add" onclick="add(${p.id})">ADD TO BAG</button></div></article>`}
-function render(){
-let list=products.filter(p=>filter==="All"||p.cat===filter);
-let s=document.getElementById("sort").value;if(s==="low")list.sort((a,b)=>a.price-b.price);if(s==="high")list.sort((a,b)=>b.price-a.price);
-document.getElementById("grid").innerHTML=list.map(card).join("");document.getElementById("count").textContent=list.length+" products";
+const money=n=>"PKR "+Number(n||0).toLocaleString("en-PK");
+function normalizeProduct(p){return {id:p.id,name:p.name,cat:p.category||p.cat||"",price:Number(p.price),old:p.old_price==null?null:Number(p.old_price),new:!!(p.is_new??p.new)}}
+async function loadProducts(){
+  const {data,error}=await supabaseClient.from("products").select("*").eq("active",true).order("id");
+  if(error||!data?.length){products=fallbackProducts; console.warn("Supabase products could not be loaded",error);}
+  else products=data.map(normalizeProduct);
+  cart=cart.filter(id=>products.some(p=>String(p.id)===String(id)));
+  localStorage.setItem("loca_cart_new",JSON.stringify(cart));
+  initUI();
 }
-function init(){document.getElementById("filters").innerHTML=["All","Women","Men","Accessories"].map(x=>`<button class="filter ${x==="All"?"active":""}" onclick="setFilter('${x}',this)">${x}</button>`).join("");document.getElementById("newGrid").innerHTML=products.filter(p=>p.new).slice(0,4).map(card).join("");render();drawCart()}
+function card(p){return `<article class="product"><div class="pic">${p.new?'<small>NEW</small>':''}<button class="heart" onclick="event.stopPropagation();add(${p.id})">♡</button></div><div class="product-info"><span class="category">${p.cat}</span><h3>${p.name}</h3><div class="price">${money(p.price)}${p.old?`<span class="old">${money(p.old)}</span>`:""}</div><button class="add" onclick="add(${p.id})">ADD TO BAG</button></div></article>`}
+function render(){let list=products.filter(p=>filter==="All"||p.cat===filter);let s=document.getElementById("sort").value;if(s==="low")list.sort((a,b)=>a.price-b.price);if(s==="high")list.sort((a,b)=>b.price-a.price);document.getElementById("grid").innerHTML=list.map(card).join("");document.getElementById("count").textContent=list.length+" products"}
+function initUI(){document.getElementById("filters").innerHTML=["All","Women","Men","Accessories"].map(x=>`<button class="filter ${x==="All"?"active":""}" onclick="setFilter('${x}',this)">${x}</button>`).join("");document.getElementById("newGrid").innerHTML=products.filter(p=>p.new).slice(0,4).map(card).join("");render();drawCart()}
 function setFilter(x,b){filter=x;document.querySelectorAll(".filter").forEach(e=>e.classList.remove("active"));b.classList.add("active");render()}
 function add(id){cart.push(id);localStorage.setItem("loca_cart_new",JSON.stringify(cart));drawCart();document.getElementById("drawer").classList.add("open");document.getElementById("overlay").classList.add("open")}
-function drawCart(){let box=document.getElementById("cartItems"),foot=document.getElementById("cartFoot");if(!cart.length){box.innerHTML='<div class="empty">Your bag is empty.</div>';foot.innerHTML="";return}let counts={};cart.forEach(id=>counts[id]=(counts[id]||0)+1);box.innerHTML=Object.entries(counts).map(([id,q])=>{let p=products.find(x=>x.id==id);return `<div class="cart-item"><div class="mini"></div><div><strong>${p.name}</strong><p>${money(p.price)} · Qty ${q}</p><button onclick="removeItem(${id})" style="border:0;background:none;padding:0;color:#8b2435">Remove</button></div></div>`}).join("");let total=cart.reduce((s,id)=>s+products.find(p=>p.id===id).price,0);foot.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:15px"><span>Subtotal</span><strong>${money(total)}</strong></div><button class="btn" style="width:100%" onclick="openCheckout()">Checkout</button>`}
-function openCheckout(){if(!cart.length){alert("Your bag is empty.");return}let total=cart.reduce((s,id)=>s+products.find(p=>p.id===id).price,0);document.getElementById("coTotal").textContent=money(total);document.getElementById("checkoutModal").classList.add("open")}
+function drawCart(){let box=document.getElementById("cartItems"),foot=document.getElementById("cartFoot");if(!cart.length){box.innerHTML='<div class="empty">Your bag is empty.</div>';foot.innerHTML="";return}let counts={};cart.forEach(id=>counts[id]=(counts[id]||0)+1);box.innerHTML=Object.entries(counts).map(([id,q])=>{let p=products.find(x=>String(x.id)===String(id));return p?`<div class="cart-item"><div class="mini"></div><div><strong>${p.name}</strong><p>${money(p.price)} · Qty ${q}</p><button onclick="removeItem(${id})" style="border:0;background:none;padding:0;color:#8b2435">Remove</button></div></div>`:""}).join("");let total=cart.reduce((s,id)=>s+(products.find(p=>String(p.id)===String(id))?.price||0),0);foot.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:15px"><span>Subtotal</span><strong>${money(total)}</strong></div><button class="btn" style="width:100%" onclick="openCheckout()">Checkout</button>`}
+function openCheckout(){if(!cart.length){alert("Your bag is empty.");return}let total=cart.reduce((s,id)=>s+(products.find(p=>String(p.id)===String(id))?.price||0),0);document.getElementById("coTotal").textContent=money(total);document.getElementById("checkoutModal").classList.add("open")}
 function closeCheckout(){document.getElementById("checkoutModal").classList.remove("open")}
-function placeOrder(e){e.preventDefault();if(!cart.length)return;let counts={};cart.forEach(id=>counts[id]=(counts[id]||0)+1);let items=Object.entries(counts).map(([id,qty])=>{let p=products.find(x=>x.id==id);return {id:p.id,name:p.name,price:p.price,qty}});let total=items.reduce((s,x)=>s+x.price*x.qty,0);let orders=JSON.parse(localStorage.getItem("loca_orders")||"[]");let order={id:"LOC-"+Date.now().toString().slice(-8),date:new Date().toISOString(),customer:{name:document.getElementById("coName").value,phone:document.getElementById("coPhone").value,email:document.getElementById("coEmail").value,address:document.getElementById("coAddress").value,city:document.getElementById("coCity").value},payment:document.getElementById("coPayment").value,items,total,status:"Pending"};orders.unshift(order);localStorage.setItem("loca_orders",JSON.stringify(orders));cart=[];localStorage.setItem("loca_cart_new","[]");drawCart();closeCheckout();toggleCart();alert("Order placed successfully. Order ID: "+order.id+"\n\nOpen Admin Panel to manage it.");e.target.reset()}
+async function placeOrder(e){
+ e.preventDefault(); if(!cart.length)return;
+ const btn=e.target.querySelector('button[type="submit"],button:last-child'); if(btn){btn.disabled=true;btn.textContent="Placing order..."}
+ try{
+  const counts={};cart.forEach(id=>counts[id]=(counts[id]||0)+1);
+  const items=Object.entries(counts).map(([id,quantity])=>({product_id:Number(id),quantity:Number(quantity)}));
+  const {data,error}=await supabaseClient.rpc("place_order",{p_name:document.getElementById("coName").value.trim(),p_phone:document.getElementById("coPhone").value.trim(),p_email:document.getElementById("coEmail").value.trim(),p_address:document.getElementById("coAddress").value.trim(),p_city:document.getElementById("coCity").value.trim(),p_payment:document.getElementById("coPayment").value,p_items:items});
+  if(error)throw error;
+  const result=Array.isArray(data)?data[0]:data;
+  const orderNo=result?.order_number||result?.order_no||result?.id||"LOCA-ORDER";
+  cart=[];localStorage.setItem("loca_cart_new","[]");drawCart();closeCheckout();toggleCart();alert("Order placed successfully. Order ID: "+orderNo+"\n\nThank you for shopping with LOCA COLLECTION.");e.target.reset();
+ }catch(err){console.error(err);alert("Order could not be placed. Please try again.\n\n"+(err.message||"Connection error"));}
+ finally{if(btn){btn.disabled=false;btn.textContent="Place Order"}}
+}
 function removeItem(id){let i=cart.indexOf(id);if(i>-1)cart.splice(i,1);localStorage.setItem("loca_cart_new",JSON.stringify(cart));drawCart()}
 function toggleCart(){document.getElementById("drawer").classList.toggle("open");document.getElementById("overlay").classList.toggle("open")}
 function toggleMenu(){document.querySelector(".navlinks").style.display=document.querySelector(".navlinks").style.display==="flex"?"none":"flex";document.querySelector(".navlinks").style.position="absolute";document.querySelector(".navlinks").style.top="65px";document.querySelector(".navlinks").style.left="0";document.querySelector(".navlinks").style.right="0";document.querySelector(".navlinks").style.background="var(--bg)";document.querySelector(".navlinks").style.padding="20px 24px";document.querySelector(".navlinks").style.flexDirection="column"}
-function searchProducts(){let q=prompt("Search LOCA products");if(!q)return;let p=products.filter(x=>x.name.toLowerCase().includes(q.toLowerCase())||x.cat.toLowerCase().includes(q.toLowerCase()));alert(p.length?p.map(x=>x.name+" — "+money(x.price)).join("\\n"):"No products found.")}
+function searchProducts(){let q=prompt("Search LOCA products");if(!q)return;let p=products.filter(x=>x.name.toLowerCase().includes(q.toLowerCase())||x.cat.toLowerCase().includes(q.toLowerCase()));alert(p.length?p.map(x=>x.name+" — "+money(x.price)).join("\n"):"No products found.")}
 function subscribe(e){e.preventDefault();document.getElementById("msg").textContent="Thank you — you're on the LOCA list.";document.getElementById("msg").style.marginTop="15px"}
-init();
+loadProducts();
 </script>
 </body>
 </html>

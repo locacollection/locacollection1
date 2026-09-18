@@ -23,14 +23,14 @@
   <div class="login-box">
     <div class="brand">LOCA <span>COLLECTION</span></div>
     <h1>Admin Panel</h1>
-    <p class="muted">Sign in to manage demo orders.</p>
+    <p class="muted">Sign in with your authorized LOCA COLLECTION admin account.</p>
     <form onsubmit="login(event)">
       <div class="field"><label>Admin email</label><input id="adminEmail" type="email" value="admin@locacollection.pk" required></div>
       <div class="field"><label>Password</label><input id="adminPass" type="password" placeholder="Enter password" required></div>
       <button class="btn" style="width:100%">Sign in</button>
       <div class="error" id="loginError"></div>
     </form>
-    <div class="note"><b>Demo login:</b> admin@locacollection.pk<br><b>Password:</b> LOCA2026<br><br>This GitHub Pages version is browser-only. It is suitable for testing, not secure production administration.</div>
+    <div class="note">Your admin email/password are managed by Supabase Authentication. Only accounts listed in the <b>admin_users</b> table can access this dashboard.</div>
   </div>
 </div>
 
@@ -51,28 +51,42 @@
 
 <div class="modal" id="orderModal"><div class="modal-box"><div class="modal-head"><h2 id="modalTitle">Order</h2><button class="smallbtn" onclick="closeOrder()">Close</button></div><div id="orderDetail"></div></div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const PRODUCTS=[
-{id:1,name:"Noor Relaxed Kurta",cat:"Women",price:6490},{id:2,name:"Aariz Tailored Shirt",cat:"Men",price:7490},{id:3,name:"Mira Draped Dress",cat:"Women",price:11990},{id:4,name:"Safa Wide-Leg Trouser",cat:"Women",price:8290},{id:5,name:"Rayan Overshirt",cat:"Men",price:8990},{id:6,name:"Luna Co-Ord Set",cat:"Women",price:10990},{id:7,name:"Naveed Classic Blazer",cat:"Men",price:14990},{id:8,name:"Mina Mini Bag",cat:"Accessories",price:5990},{id:9,name:"Silk Edge Scarf",cat:"Accessories",price:3490},{id:10,name:"Ayla Everyday Tote",cat:"Accessories",price:6990},{id:11,name:"Hadi Essential Tee",cat:"Men",price:3990},{id:12,name:"Iris Satin Skirt",cat:"Women",price:7990}
-];
-const money=n=>"PKR "+Number(n).toLocaleString("en-PK");
-function orders(){return JSON.parse(localStorage.getItem("loca_orders")||"[]")}
-function saveOrders(x){localStorage.setItem("loca_orders",JSON.stringify(x))}
-function login(e){e.preventDefault();let em=document.getElementById("adminEmail").value.trim().toLowerCase(),pw=document.getElementById("adminPass").value;if(em==="admin@locacollection.pk"&&pw==="LOCA2026"){sessionStorage.setItem("loca_admin","1");showApp()}else document.getElementById("loginError").textContent="Invalid demo login."}
-function logout(){sessionStorage.removeItem("loca_admin");location.reload()}
-function showApp(){document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";renderAll()}
-function setTab(tab,b){document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById("ordersSection").style.display=tab==="orders"?"block":"none";document.getElementById("customersSection").style.display=tab==="customers"?"block":"none";document.getElementById("productsSection").style.display=tab==="products"?"block":"none";if(tab==="customers")renderCustomers();if(tab==="products")renderProducts()}
-function renderAll(){renderStats();renderOrders();renderCustomers();renderProducts()}
-function renderStats(){let o=orders(),pending=o.filter(x=>x.status==="Pending").length,confirmed=o.filter(x=>x.status==="Confirmed").length,delivered=o.filter(x=>x.status==="Delivered").length,revenue=o.filter(x=>x.status!=="Cancelled").reduce((s,x)=>s+x.total,0);document.getElementById("stats").innerHTML=[["Total orders",o.length],["Pending",pending],["Delivered",delivered],["Revenue",money(revenue)]].map(x=>`<div class="stat"><span class="muted">${x[0]}</span><b>${x[1]}</b></div>`).join("")}
-function renderOrders(){let o=orders(),q=(document.getElementById("orderSearch")?.value||"").toLowerCase(),f=document.getElementById("statusFilter")?.value||"All";o=o.filter(x=>(f==="All"||x.status===f)&&((x.id+" "+x.customer.name+" "+x.customer.phone+" "+x.customer.email).toLowerCase().includes(q)));document.getElementById("orderCount").textContent=o.length+" shown";document.getElementById("ordersBody").innerHTML=o.length?o.map(x=>`<tr><td><b>${x.id}</b><br><span class="muted">${new Date(x.date).toLocaleString()}</span></td><td><b>${x.customer.name}</b><br>${x.customer.city}<br><span class="muted">${x.customer.phone}</span></td><td>${x.items.reduce((s,i)=>s+i.qty,0)} item(s)</td><td><b>${money(x.total)}</b></td><td>${x.payment}</td><td><span class="status ${x.status}">${x.status}</span><br><select style="margin-top:7px" onchange="updateStatus('${x.id}',this.value)">${["Pending","Confirmed","Shipped","Delivered","Cancelled"].map(s=>`<option ${s===x.status?"selected":""}>${s}</option>`).join("")}</select></td><td><div class="actions"><button class="smallbtn" onclick="viewOrder('${x.id}')">View</button><button class="smallbtn danger" onclick="deleteOrder('${x.id}')">Delete</button></div></td></tr>`).join(""):'<tr><td colspan="7" class="empty">No orders yet. Place an order from the storefront or add a demo order.</td></tr>'}
-function updateStatus(id,status){let o=orders(),x=o.find(a=>a.id===id);if(x){x.status=status;saveOrders(o);renderAll()}}
-function deleteOrder(id){if(!confirm("Delete "+id+"?"))return;saveOrders(orders().filter(x=>x.id!==id));renderAll()}
-function viewOrder(id){let x=orders().find(a=>a.id===id);if(!x)return;document.getElementById("modalTitle").textContent=x.id;document.getElementById("orderDetail").innerHTML=`<div class="detail-grid"><div class="detail"><span>Customer</span>${x.customer.name}</div><div class="detail"><span>Status</span>${x.status}</div><div class="detail"><span>Phone</span>${x.customer.phone}</div><div class="detail"><span>Email</span>${x.customer.email}</div><div class="detail"><span>City</span>${x.customer.city}</div><div class="detail"><span>Payment</span>${x.payment}</div><div class="detail" style="grid-column:1/-1"><span>Address</span>${x.customer.address}</div></div><div class="items">${x.items.map(i=>`<div class="item"><span>${i.name} × ${i.qty}</span><b>${money(i.price*i.qty)}</b></div>`).join("")}</div><div class="total"><span>Total</span><b>${money(x.total)}</b></div>`;document.getElementById("orderModal").classList.add("open")}
+const SUPABASE_URL="https://qvvrjogeqranowfseivh.supabase.co";
+const SUPABASE_KEY="sb_publishable_IP9PzAVXsVwcqNWenmdmLg_ACtzSDMB";
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let ORDERS=[],CUSTOMERS=[],ITEMS=[],PRODUCTS=[];
+const money=n=>"PKR "+Number(n||0).toLocaleString("en-PK");
+const esc=s=>String(s??"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+function login(e){e.preventDefault();const em=document.getElementById("adminEmail").value.trim(),pw=document.getElementById("adminPass").value;supabaseClient.auth.signInWithPassword({email:em,password:pw}).then(async ({data,error})=>{if(error)throw error;const {data:admins,error:ae}=await supabaseClient.from("admin_users").select("user_id").eq("user_id",data.user.id).limit(1);if(ae||!admins?.length){await supabaseClient.auth.signOut();throw new Error("This account is not authorized as an admin.")}showApp()}).catch(err=>document.getElementById("loginError").textContent=err.message||"Sign in failed.")}
+async function logout(){await supabaseClient.auth.signOut();location.reload()}
+async function showApp(){document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";await renderAll()}
+function setTab(tab,b){document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById("ordersSection").style.display=tab==="orders"?"block":"none";document.getElementById("customersSection").style.display=tab==="customers"?"block":"none";document.getElementById("productsSection").style.display=tab==="products"?"block":"none"}
+async function loadData(){
+ const [o,c,i,p]=await Promise.all([
+  supabaseClient.from("orders").select("*").order("created_at",{ascending:false}),
+  supabaseClient.from("customers").select("*"),
+  supabaseClient.from("order_items").select("*"),
+  supabaseClient.from("products").select("*").order("id")
+ ]);
+ for(const r of [o,c,i,p])if(r.error)throw r.error;
+ ORDERS=o.data||[];CUSTOMERS=c.data||[];ITEMS=i.data||[];PRODUCTS=p.data||[];
+}
+function orderNo(o){return o.order_number||o.order_no||o.id}
+function customerFor(o){return CUSTOMERS.find(c=>String(c.id)===String(o.customer_id))||{name:"",phone:"",email:"",city:"",address:""}}
+function itemsFor(o){return ITEMS.filter(i=>String(i.order_id)===String(o.id))}
+async function renderAll(){try{await loadData();renderStats();renderOrders();renderCustomers();renderProducts()}catch(err){console.error(err);document.getElementById("loginError").textContent=err.message||"Could not load dashboard data."}}
+function renderStats(){const pending=ORDERS.filter(x=>x.status==="Pending").length,delivered=ORDERS.filter(x=>x.status==="Delivered").length,revenue=ORDERS.filter(x=>x.status!=="Cancelled").reduce((s,x)=>s+Number(x.total||0),0);document.getElementById("stats").innerHTML=[["Total orders",ORDERS.length],["Pending",pending],["Delivered",delivered],["Revenue",money(revenue)]].map(x=>`<div class="stat"><span class="muted">${x[0]}</span><b>${x[1]}</b></div>`).join("")}
+function renderOrders(){let o=ORDERS.slice(),q=(document.getElementById("orderSearch")?.value||"").toLowerCase(),f=document.getElementById("statusFilter")?.value||"All";o=o.filter(x=>{const c=customerFor(x);return(f==="All"||x.status===f)&&((orderNo(x)+" "+c.name+" "+c.phone+" "+c.email).toLowerCase().includes(q))});document.getElementById("orderCount").textContent=o.length+" shown";document.getElementById("ordersBody").innerHTML=o.length?o.map(x=>{const c=customerFor(x),its=itemsFor(x);return `<tr><td><b>${esc(orderNo(x))}</b><br><span class="muted">${new Date(x.created_at).toLocaleString()}</span></td><td><b>${esc(c.name)}</b><br>${esc(c.city)}<br><span class="muted">${esc(c.phone)}</span></td><td>${its.reduce((s,i)=>s+Number(i.quantity||i.qty||0),0)} item(s)</td><td><b>${money(x.total)}</b></td><td>${esc(x.payment_method||x.payment||"")}</td><td><span class="status ${esc(x.status)}">${esc(x.status)}</span><br><select style="margin-top:7px" onchange="updateStatus('${x.id}',this.value)">${["Pending","Confirmed","Shipped","Delivered","Cancelled"].map(s=>`<option ${s===x.status?"selected":""}>${s}</option>`).join("")}</select></td><td><div class="actions"><button class="smallbtn" onclick="viewOrder('${x.id}')">View</button><button class="smallbtn danger" onclick="deleteOrder('${x.id}')">Delete</button></div></td></tr>`}).join(""):'<tr><td colspan="7" class="empty">No orders found.</td></tr>'}
+async function updateStatus(id,status){const {error}=await supabaseClient.from("orders").update({status}).eq("id",id);if(error){alert(error.message);return}await renderAll()}
+async function deleteOrder(id){if(!confirm("Delete this order?"))return;const {error}=await supabaseClient.from("orders").delete().eq("id",id);if(error){alert("Could not delete order: "+error.message);return}await renderAll()}
+function viewOrder(id){const x=ORDERS.find(a=>String(a.id)===String(id));if(!x)return;const c=customerFor(x),its=itemsFor(x);document.getElementById("modalTitle").textContent=orderNo(x);document.getElementById("orderDetail").innerHTML=`<div class="detail-grid"><div class="detail"><span>Customer</span>${esc(c.name)}</div><div class="detail"><span>Status</span>${esc(x.status)}</div><div class="detail"><span>Phone</span>${esc(c.phone)}</div><div class="detail"><span>Email</span>${esc(c.email)}</div><div class="detail"><span>City</span>${esc(c.city)}</div><div class="detail"><span>Payment</span>${esc(x.payment_method||"")}</div><div class="detail" style="grid-column:1/-1"><span>Address</span>${esc(c.address)}</div></div><div class="items">${its.map(i=>{const p=PRODUCTS.find(p=>String(p.id)===String(i.product_id));const name=i.product_name||i.name||p?.name||"Product";const price=Number(i.unit_price??i.price??p?.price??0);const qty=Number(i.quantity??i.qty??0);return `<div class="item"><span>${esc(name)} × ${qty}</span><b>${money(price*qty)}</b></div>`}).join("")}</div><div class="total"><span>Total</span><b>${money(x.total)}</b></div>`;document.getElementById("orderModal").classList.add("open")}
 function closeOrder(){document.getElementById("orderModal").classList.remove("open")}
-function renderCustomers(){let map={};orders().forEach(o=>{let k=o.customer.email||o.customer.phone;if(!map[k])map[k]={...o.customer,orders:0,spent:0};map[k].orders++;if(o.status!=="Cancelled")map[k].spent+=o.total});document.getElementById("customersBody").innerHTML=Object.values(map).length?Object.values(map).map(c=>`<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td>${c.email}</td><td>${c.city}</td><td>${c.orders}</td><td><b>${money(c.spent)}</b></td></tr>`).join(""):'<tr><td colspan="6" class="empty">No customers yet.</td></tr>'}
-function renderProducts(){document.getElementById("productsBody").innerHTML=PRODUCTS.map(p=>`<tr><td>${p.id}</td><td><b>${p.name}</b></td><td>${p.cat}</td><td>${money(p.price)}</td><td>Storefront</td></tr>`).join("")}
-function seedDemoOrder(){let o=orders(),id="LOC-"+Math.random().toString(36).slice(2,8).toUpperCase();o.unshift({id,date:new Date().toISOString(),customer:{name:"Demo Customer",phone:"+92 300 0000000",email:"customer@example.com",address:"Demo delivery address",city:"Rawalpindi"},payment:"Cash on Delivery",items:[{id:1,name:"Noor Relaxed Kurta",price:6490,qty:1},{id:8,name:"Mina Mini Bag",price:5990,qty:1}],total:12480,status:"Pending"});saveOrders(o);renderAll()}
-if(sessionStorage.getItem("loca_admin")==="1")showApp();
+function renderCustomers(){const map={};ORDERS.forEach(o=>{const c=customerFor(o),k=c.id||c.email||c.phone||c.name;if(!map[k])map[k]={...c,orders:0,spent:0};map[k].orders++;if(o.status!=="Cancelled")map[k].spent+=Number(o.total||0)});const arr=Object.values(map);document.getElementById("customersBody").innerHTML=arr.length?arr.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td>${esc(c.phone)}</td><td>${esc(c.email)}</td><td>${esc(c.city)}</td><td>${c.orders}</td><td><b>${money(c.spent)}</b></td></tr>`).join(""):'<tr><td colspan="6" class="empty">No customers yet.</td></tr>'}
+function renderProducts(){document.getElementById("productsBody").innerHTML=PRODUCTS.map(p=>`<tr><td>${esc(p.id)}</td><td><b>${esc(p.name)}</b></td><td>${esc(p.category||p.cat)}</td><td>${money(p.price)}</td><td>${p.active===false?"Hidden":"Active"}</td></tr>`).join("")}
+async function seedDemoOrder(){alert("Demo orders are disabled on the live database dashboard. Place a real test order from the storefront instead.")}
+(async()=>{const {data}=await supabaseClient.auth.getSession();if(data.session){const {data:admins}=await supabaseClient.from("admin_users").select("user_id").eq("user_id",data.session.user.id).limit(1);if(admins?.length)showApp()}})();
 </script>
 </body>
 </html>

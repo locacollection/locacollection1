@@ -1,25 +1,18 @@
-# LOCA COLLECTION — GitHub Pages Admin + Order Management
+# LOCA COLLECTION — Supabase-connected GitHub Pages version
 
-This version adds a browser-only admin panel and order workflow.
+This package connects the storefront and admin dashboard to the Supabase project configured for LOCA COLLECTION.
 
-## Files
-- `index.html` — storefront + checkout form
-- `admin.html` — admin dashboard
-- `README.md` — instructions
+## Upload to GitHub Pages
+Replace your current `index.html` and `admin.html` with the two files in this folder.
 
-## GitHub Pages
-Upload `index.html` and `admin.html` to the repository root. Keep Pages set to:
-- Branch: `main`
-- Folder: `/(root)`
+## Storefront
+Orders are sent through the Supabase `place_order` RPC. Product prices are read from the `products` table. The publishable key is safe to use in browser code when Row Level Security is configured correctly.
 
-Admin URL:
-`https://locacollection.github.io/loca-collection/admin.html`
-
-## Demo admin login
-Email: `admin@locacollection.pk`
-Password: `LOCA2026`
+## Admin
+Admin login uses Supabase Authentication. The signed-in user must also exist in `public.admin_users`. Orders, customers, order items and products are read from Supabase. Order status updates are saved centrally.
 
 ## Important
-This is a static GitHub Pages implementation. Orders are stored in the browser's `localStorage`, so the admin panel only sees orders created in the same browser/device/profile. The login is not secure production authentication and payments are not processed.
+Do not put a Supabase secret/service-role key in GitHub or browser code.
 
-For real customers and real orders, the next step is a hosted backend/database plus secure authentication and a payment provider.
+## Current payment behavior
+Checkout records Cash on Delivery or Bank Transfer. No online card payment gateway is connected yet.
