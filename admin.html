@@ -576,9 +576,10 @@ const text=(
 (c.email || "")
 ).toLowerCase();
 
-return
+return (
 (status==="All" || order.status===status)
-&& text.includes(query);
+&& text.includes(query)
+);
 
 });
 
