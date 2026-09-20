@@ -51,7 +51,7 @@ LOCA.productCard = function(p){
     <div class="pic">
       <img loading="lazy" src="${p.image || LOCA.images[0]}" alt="${p.name}" onerror="this.src='${LOCA.images[0]}'">
       ${p.new ? '<span class="badge">New</span>' : ''}
-      <button class="heart" onclick="event.stopPropagation();add(${p.id})">♡</button>
+      <button class="heart" aria-label="Add to bag" onclick="event.stopPropagation();add(${p.id})">+</button>
     </div>
     <div class="product-info">
       <span class="category">${p.cat}</span>
@@ -66,7 +66,7 @@ LOCA.matchesFilter = function(p){
   const c = (p.cat || "").toLowerCase();
   if(LOCA.filter === "All") return true;
   if(LOCA.filter === "Women") return c.includes("women") || c.includes("woman") || c.includes("ladies");
-  if(LOCA.filter === "Men") return c.includes("men") || c.includes("man");
+  if(LOCA.filter === "Men") return /\b(men|man|mens|male)\b/.test(c);
   if(LOCA.filter === "Footwear") return /footwear|shoe|chappal|khussa|sandal|slide|peshawari/.test(c);
   if(LOCA.filter === "Accessories") return /accessor|bag|jewell|jewelry|scarf|stole|wallet|belt|cap|fragrance|perfume/.test(c);
   return c === LOCA.filter.toLowerCase();
@@ -85,13 +85,14 @@ async function loadProducts(){
 }
 
 function render(){
-  let list = LOCA.products.filter(LOCA.matchesFilter);
+  const query = (document.getElementById("productSearch")?.value || "").trim().toLowerCase();
+  let list = (LOCA.products || []).filter(LOCA.matchesFilter).filter(p => !query || `${p.name} ${p.cat}`.toLowerCase().includes(query));
   const sort = document.getElementById("sort")?.value || "featured";
   if(sort === "low") list.sort((a,b) => a.price - b.price);
   if(sort === "high") list.sort((a,b) => b.price - a.price);
   const grid = document.getElementById("grid");
   const count = document.getElementById("count");
-  if(grid) grid.innerHTML = list.map(LOCA.productCard).join("");
+  if(grid) grid.innerHTML = list.length ? list.map(LOCA.productCard).join("") : '<div class="search-empty"><h3>No matches just yet.</h3><p>Try another search or choose a different category.</p></div>';
   if(count) count.textContent = list.length + " products";
 }
 
@@ -122,15 +123,8 @@ function setFilterFromLink(x){
 }
 
 function searchProducts(){
-  const q = prompt("Search LOCA products");
-  if(!q) return;
-  const matches = LOCA.products.filter(x => x.name.toLowerCase().includes(q.toLowerCase()) || x.cat.toLowerCase().includes(q.toLowerCase()));
-  if(matches.length){
-    document.getElementById("shop")?.scrollIntoView({behavior:"smooth"});
-    alert(matches.map(x => x.name + " — " + LOCA.money(x.price)).join("\n"));
-  } else {
-    alert("No products found.");
-  }
+  document.getElementById("shop")?.scrollIntoView({behavior:"smooth"});
+  document.getElementById("productSearch")?.focus({preventScroll:true});
 }
 
 window.loadProducts = loadProducts;
@@ -138,3 +132,4 @@ window.render = render;
 window.setFilter = setFilter;
 window.setFilterFromLink = setFilterFromLink;
 window.searchProducts = searchProducts;
+

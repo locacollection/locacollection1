@@ -1,16 +1,12 @@
 function toggleMenu(){
-  const n = document.querySelector(".navlinks");
-  if(!n) return;
-  n.style.display = n.style.display === "flex" ? "none" : "flex";
-  n.style.position = "absolute";
-  n.style.top = "68px";
-  n.style.left = "0";
-  n.style.right = "0";
-  n.style.background = "var(--paper)";
-  n.style.padding = "20px 25px";
-  n.style.flexDirection = "column";
-  n.style.borderBottom = "1px solid var(--line)";
+  const nav = document.querySelector(".navlinks");
+  const open = nav?.classList.toggle("is-open");
+  document.querySelector(".hamb")?.setAttribute("aria-expanded", String(!!open));
 }
+document.querySelectorAll(".navlinks a").forEach(link => link.addEventListener("click", () => {
+  document.querySelector(".navlinks")?.classList.remove("is-open");
+  document.querySelector(".hamb")?.setAttribute("aria-expanded", "false");
+}));
 
 function subscribe(event){
   event.preventDefault();
@@ -54,3 +50,4 @@ document.addEventListener("visibilitychange", () => {
 window.toggleMenu = toggleMenu;
 window.subscribe = subscribe;
 window.reveal = reveal;
+
