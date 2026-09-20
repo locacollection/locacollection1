@@ -210,3 +210,79 @@ tbody tr{transition:background .2s}tbody tr:hover{background:#fbf5ed!important}
   .user-order-row{grid-template-columns:1fr}.user-order-row .smallbtn{width:100%}.admin-toast-region{right:16px;bottom:16px}
   .loginbox{padding:36px 25px}.loginbox h1{font-size:46px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Order workflow: fulfilment, payment and cancellation */
+#ordersSection table{min-width:1040px}
+.workflow-cell{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;min-width:185px}
+.workflow-badges,.mini-status-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mini-status-row{margin-top:7px}
+.status-chip{display:inline-flex;align-items:center;min-height:25px;padding:4px 9px;border:1px solid transparent;border-radius:999px;font-size:8px;font-weight:800;letter-spacing:.08em;line-height:1;text-transform:uppercase;white-space:nowrap}
+.status-chip:before{content:"";width:5px;height:5px;margin-right:6px;border-radius:50%;background:currentColor;opacity:.72}
+.order-pending{background:#fff1cf;color:#78551e}
+.order-confirmed{background:#e8e8f3;color:#4f4d77}
+.order-processing{background:#efe7f4;color:#664878}
+.order-packed{background:#eee4d6;color:#765a39}
+.order-shipped{background:#e6edf7;color:#3f5d7e}
+.order-out-for-delivery{background:#dff0ed;color:#376a61}
+.order-delivered{background:#e4eee2;color:#3e6545}
+.order-cancelled{background:#f7e3e0;color:#8c3934}
+.order-returned{background:#ebe8e4;color:#635b54}
+.payment-unpaid{border-color:#e8c0ba;background:#fff8f6;color:#994840}
+.payment-payment-pending{border-color:#ead39e;background:#fffaf0;color:#7a5c24}
+.payment-partially-paid{border-color:#d5c5df;background:#faf6fc;color:#684f76}
+.payment-paid{border-color:#bcd6b8;background:#f4faf3;color:#47704b}
+.payment-failed{border-color:#e2b6b2;background:#fff6f5;color:#9a3f39}
+.payment-refunded{border-color:#c8c4d5;background:#f7f6fa;color:#5e5872}
+.workflow-reason{flex-basis:100%;display:block;margin-top:1px;color:#8a6c63;line-height:1.45}
+.row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.workflow-button{border-color:rgba(124,64,60,.25)!important;background:#fff8f5!important;color:var(--l-wine)!important}
+.workflow-button:hover{border-color:var(--l-wine)!important;background:#f5e8e2!important}
+
+.order-workflow-dialog{width:min(760px,calc(100% - 28px));max-height:92vh;padding:0;border:1px solid rgba(234,216,185,.65);border-radius:27px;color:var(--l-ink);background:var(--l-paper);box-shadow:0 38px 120px rgba(0,0,0,.38)}
+.order-workflow-dialog[open]{animation:windowIn .38s var(--l-ease) both}
+.order-workflow-dialog::backdrop{background:rgba(18,14,11,.7);backdrop-filter:blur(13px)}
+.order-workflow-dialog form{padding:32px}
+.workflow-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:21px;border-bottom:1px solid var(--l-line)}
+.workflow-head h2{margin:6px 0 3px;font:500 34px/1.04 "Playfair Display",Georgia,serif;letter-spacing:-.045em}
+.workflow-head .muted{margin:0}
+.workflow-snapshot{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;margin:20px 0;padding:18px;border:1px solid rgba(189,152,99,.2);border-radius:17px;background:#f7eee3}
+.workflow-snapshot small,.workflow-snapshot strong,.workflow-snapshot span{display:block}
+.workflow-snapshot small{margin-bottom:8px;color:#7a7067;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.workflow-snapshot>div:last-child{text-align:right}
+.workflow-snapshot strong{color:var(--l-wine);font-size:19px}
+.workflow-snapshot span{margin-top:3px;color:#7a7067;font-size:10px}
+.workflow-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.order-workflow-dialog .field{margin:0}
+.order-workflow-dialog .field>span{color:#6d635a;font-size:9px;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
+.order-workflow-dialog .field small{color:#887e74;font-size:10px;line-height:1.5}
+.order-workflow-dialog select,.order-workflow-dialog textarea{width:100%;min-height:47px;padding:12px 13px;border:1px solid var(--l-line);border-radius:12px;background:#fff;color:var(--l-ink);outline:none;transition:border-color .2s,box-shadow .2s}
+.order-workflow-dialog textarea{resize:vertical}
+.order-workflow-dialog select:focus,.order-workflow-dialog textarea:focus{border-color:var(--l-gold);box-shadow:0 0 0 4px rgba(189,152,99,.12)}
+.workflow-cancellation{margin-top:20px;padding:20px;border:1px solid rgba(161,63,58,.18);border-radius:17px;background:#fff7f4}
+.workflow-cancellation[hidden]{display:none}
+.workflow-section-title{display:flex;justify-content:space-between;gap:15px;align-items:baseline;margin-bottom:15px}
+.workflow-section-title span{font-size:13px;font-weight:800}.workflow-section-title small{color:#8a746d;font-size:10px}
+.workflow-cancellation>.field{margin-top:14px}
+.workflow-guidance{display:flex;gap:11px;align-items:flex-start;margin-top:18px;padding:13px 15px;border-radius:13px;background:#eee7dd;color:#665d55}
+.workflow-guidance-icon{display:grid;place-items:center;flex:0 0 22px;width:22px;height:22px;border-radius:50%;background:var(--l-ink);color:#fff;font:700 11px/1 Georgia,serif}
+.workflow-guidance p{margin:1px 0 0;font-size:10px;line-height:1.55}
+#workflowMessage{min-height:19px;margin:12px 0 0;color:var(--l-sage);font-size:11px}
+#workflowMessage.error{color:var(--l-danger)}
+.workflow-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;padding-top:18px;border-top:1px solid var(--l-line)}
+.order-detail-workflow{display:grid;grid-template-columns:1fr 1fr auto;align-items:center;gap:12px;margin:19px 0;padding:15px;border:1px solid rgba(189,152,99,.2);border-radius:15px;background:#f7eee3}
+.order-detail-workflow small{display:block;margin-bottom:6px;color:#7a7067;font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.cancellation-detail{margin-top:16px;padding:17px;border:1px solid rgba(161,63,58,.15);border-radius:15px;background:#fff7f4}
+.cancellation-detail .grid{margin-top:10px}
+.order-line-items{margin-top:18px}
+
+@media(max-width:650px){
+  .order-workflow-dialog{width:100%;max-width:none;max-height:95vh;margin:auto 0 0;border-radius:25px 25px 0 0}
+  .order-workflow-dialog form{padding:24px 18px}
+  .workflow-grid{grid-template-columns:1fr}
+  .workflow-snapshot{grid-template-columns:1fr}.workflow-snapshot>div:last-child{text-align:left}
+  .workflow-section-title{display:block}.workflow-section-title small{display:block;margin-top:4px}
+  .workflow-actions{position:sticky;bottom:-24px;margin-inline:-18px;padding:14px 18px 18px;background:rgba(255,250,244,.95);backdrop-filter:blur(12px)}
+  .workflow-actions .btn{flex:1}
+  .order-detail-workflow{grid-template-columns:1fr 1fr}.order-detail-workflow .workflow-button{grid-column:1/-1}
+}
