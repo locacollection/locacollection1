@@ -155,6 +155,19 @@ on public.orders for select
 to authenticated
 using (user_id = auth.uid());
 
+-- Admins can change only the fulfilment status through the browser dashboard.
+-- The table privilege and RLS policy are both required for Supabase Data API PATCH requests.
+revoke update on table public.orders from anon;
+revoke update on table public.orders from authenticated;
+grant update (status) on table public.orders to authenticated;
+
+drop policy if exists "Admin update orders" on public.orders;
+create policy "Admin update orders"
+on public.orders for update
+to authenticated
+using ((select public.is_admin()))
+with check ((select public.is_admin()));
+
 -- Customers can read order items only for orders that belong to them.
 alter table public.order_items enable row level security;
 drop policy if exists customer_read_own_order_items on public.order_items;
