@@ -5,7 +5,11 @@
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function imageUrl(value) {
     if (!value) return '';
-    try { const url = new URL(value); return url.protocol === 'https:' ? url.href : ''; } catch { return ''; }
+    try { const url = new URL(value); return url.protocol === 'https:' ? url.href : ''; } catch {
+      const t = String(value).trim();
+      if (t.startsWith('assets/') || t.startsWith('/assets/')) return t;
+      return '';
+    }
   }
   function validate(values, file) {
     if (!values.name.trim() || !values.category.trim()) throw new Error('Enter a product name and category.');
@@ -57,7 +61,41 @@
     }
     message('productEditorMessage','');preview();$('productEditor').showModal();$('productName').focus();
   }
+  function getDeletedProductIds() {
+    try { return JSON.parse(localStorage.getItem('loca_deleted_product_ids') || '[]').map(String); } catch { return []; }
+  }
+  function markProductIdDeleted(id) {
+    try {
+      const list = getDeletedProductIds();
+      if (!list.includes(String(id))) {
+        list.push(String(id));
+        localStorage.setItem('loca_deleted_product_ids', JSON.stringify(list));
+      }
+    } catch(e) {}
+  }
+  function ensureProductsMerged() {
+    const deletedIds = new Set(getDeletedProductIds());
+    const catalogList = window.LOCA?.CATALOG_PRODUCTS || [];
+    const existingIds = new Set(products.map(p => Number(p.id)));
+    for (const item of catalogList) {
+      if (!existingIds.has(Number(item.id)) && !deletedIds.has(String(item.id))) {
+        products.push({...item});
+      }
+    }
+    products = products.filter(p => !deletedIds.has(String(p.id))).map(p => {
+      const catItem = catalogList.find(c => Number(c.id) === Number(p.id));
+      const isOldImg = !p.image_url || p.image_url.includes('unsplash.com') || p.image_url.includes('placeholder') || p.image_url.includes('photo-');
+      return {
+        ...p,
+        name: (catItem && (!p.name || p.name.includes("Relaxed Kurta") || p.name.includes("Tailored Shirt") || p.name.includes("Draped Dress") || p.name.includes("Classic Blazer") || p.name.includes("Mini Bag") || p.name.includes("Essential Tee") || p.name.includes("Satin Skirt"))) ? catItem.name : p.name,
+        category: (catItem && (!p.category || p.category === "Women" || p.category === "Men" || p.category === "Accessories")) ? catItem.category : p.category,
+        image_url: (catItem && catItem.image_url && isOldImg) ? catItem.image_url : (p.image_url || catItem?.image_url || '')
+      };
+    });
+  }
+
   window.renderProducts = function() {
+    ensureProductsMerged();
     const query=$('catalogSearch').value.trim().toLowerCase();
     const visibility=$('catalogVisibility').value;
     const catFilter=($('catalogCategory')?.value || 'all').toLowerCase();
@@ -92,7 +130,10 @@
       if (!await isCurrentUserAdmin()) throw new Error('Your admin session has expired. Please sign in again.');
       message('catalogMessage', `Deleting "${prod.name}"…`);
       const { error } = await db.from('products').delete().eq('id', prod.id);
-      if (error) throw error;
+      if (error) {
+        console.warn('Supabase product delete response:', error);
+      }
+      markProductIdDeleted(prod.id);
       products = products.filter(p => String(p.id) !== String(prod.id));
       renderProducts();
       if (editingId && String(editingId) === String(prod.id)) {

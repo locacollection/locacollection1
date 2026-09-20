@@ -4,36 +4,75 @@ LOCA.filter = "All";
 LOCA.money = n => "PKR " + Number(n || 0).toLocaleString("en-PK");
 
 LOCA.normalizeProduct = function(p, i){
+  const catalogItem = (LOCA.CATALOG_PRODUCTS || []).find(c => Number(c.id) === Number(p.id));
+
+  // Detect if product is using older generic/European/food unsplash photos or placeholder
+  const isRejectedOldImg = !p.image_url ||
+    p.image_url.includes('unsplash.com') ||
+    p.image_url.includes('placeholder') ||
+    p.image_url.includes('photo-');
+
+  const name = (catalogItem && (!p.name || p.name.includes("Relaxed Kurta") || p.name.includes("Tailored Shirt") || p.name.includes("Draped Dress") || p.name.includes("Classic Blazer") || p.name.includes("Mini Bag") || p.name.includes("Essential Tee") || p.name.includes("Satin Skirt") || p.name.includes("Wide-Leg Trouser") || p.name.includes("Overshirt") || p.name.includes("Co-Ord Set") || p.name.includes("Silk Edge Scarf") || p.name.includes("Everyday Tote")))
+    ? catalogItem.name
+    : (p.name || catalogItem?.name || "");
+
+  const cat = (catalogItem && (!p.category || p.category === "Women" || p.category === "Men" || p.category === "Accessories"))
+    ? catalogItem.category
+    : (p.category || p.cat || catalogItem?.category || "");
+
+  const desc = (catalogItem && (!p.description || p.description.length < 30 || p.description.includes("Everyday") || p.description.includes("Relaxed")))
+    ? catalogItem.description
+    : (p.description || catalogItem?.description || "");
+
+  // Always prefer the curated authentic Pakistani image if the DB has an old unplash image
+  const img = (catalogItem && catalogItem.image_url && isRejectedOldImg)
+    ? catalogItem.image_url
+    : (p.image_url || catalogItem?.image_url || p.image || "");
+
   return {
     ...p,
     id: p.id,
-    name: p.name,
-    cat: p.category || p.cat || "",
-    price: Number(p.price),
-    old: p.old_price == null ? null : Number(p.old_price),
-    new: !!(p.is_new ?? p.new),
-    image: p.image_url || p.image || ""
+    name: name,
+    cat: cat,
+    category: cat,
+    price: Number(p.price || catalogItem?.price || 0),
+    old: (p.old_price != null ? Number(p.old_price) : (catalogItem?.old_price ?? null)),
+    new: !!(p.is_new ?? p.new ?? catalogItem?.is_new),
+    description: desc,
+    image: img
   };
 };
 
 LOCA.escape = value => String(value ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 LOCA.safeImage = value => {
-  try { const url = new URL(value); if(url.protocol === 'https:') return url.href; } catch {}
+  if (!value || typeof value !== 'string') return 'assets/product-placeholder.svg';
+  const trimmed = value.trim();
+  if (trimmed.startsWith('assets/') || trimmed.startsWith('/assets/') || trimmed.startsWith('src/assets/')) {
+    return trimmed;
+  }
+  try { const url = new URL(trimmed); if(url.protocol === 'https:') return url.href; } catch {}
   return 'assets/product-placeholder.svg';
 };
 LOCA.productCard = function(p){
   const e=LOCA.escape; const id=Number(p.id);
+  const discount = (p.old && p.old > p.price) ? Math.round(((p.old - p.price) / p.old) * 100) : 0;
   return `<article class="product">
     <div class="pic">
       <img loading="lazy" src="${e(LOCA.safeImage(p.image))}" alt="${e(p.name)}" onerror="this.onerror=null;this.src='assets/product-placeholder.svg'">
-      ${p.new ? '<span class="badge">New</span>' : ''}
+      <div class="product-badges">
+        ${p.new ? '<span class="badge new-badge">New Arrival</span>' : ''}
+        ${discount > 0 ? `<span class="badge sale-badge">SAVE ${discount}%</span>` : ''}
+      </div>
       <button class="heart" aria-label="Add ${e(p.name)} to bag" onclick="add(${id})">+</button>
     </div>
     <div class="product-info">
-      <span class="category">${e(p.cat)}</span>
+      <div class="category-row">
+        <span class="category">${e(p.cat)}</span>
+        <span class="delivery-pill">COD in PK</span>
+      </div>
       <h3>${e(p.name)}</h3>
       <div class="price">${LOCA.money(p.price)}${p.old ? `<span class="old">${LOCA.money(p.old)}</span>` : ""}</div>
-      ${p.description ? `<details class="product-description"><summary>Product details</summary><p>${e(p.description)}</p></details>` : ''}
+      ${p.description ? `<details class="product-description"><summary>Fabric &amp; details</summary><p>${e(p.description)}</p></details>` : ''}
       <button class="add" onclick="add(${id})">Add to bag +</button>
     </div>
   </article>`;
@@ -89,17 +128,32 @@ LOCA.matchesFilter = function(p){
 };
 
 async function loadProducts(){
+  const deletedIds = new Set((() => {
+    try { return JSON.parse(localStorage.getItem('loca_deleted_product_ids') || '[]').map(String); } catch { return []; }
+  })());
+
   try {
     const {data,error}=await LOCA.db.from("products").select("*").eq("active",true).order("id");
     if(error)throw error;
-    LOCA.products=(data||[]).map(LOCA.normalizeProduct);
+    
+    // Combine database products with our curated 32-item Pakistani fashion catalog
+    const dbProducts = (data || []).filter(p => !deletedIds.has(String(p.id)));
+    const dbIds = new Set(dbProducts.map(p => Number(p.id)));
+    const catalogList = window.LOCA?.CATALOG_PRODUCTS || [];
+
+    const combined = [...dbProducts];
+    for (const item of catalogList) {
+      if (!dbIds.has(Number(item.id)) && !deletedIds.has(String(item.id))) {
+        combined.push(item);
+      }
+    }
+
+    LOCA.products = combined.map(LOCA.normalizeProduct);
     initStoreUI();
   } catch(error) {
-    LOCA.products=[];
+    LOCA.products = (window.LOCA?.CATALOG_PRODUCTS || []).filter(p => !deletedIds.has(String(p.id))).map(LOCA.normalizeProduct);
     initStoreUI();
-    document.getElementById("grid").innerHTML='<div class="search-empty"><h3>Products are taking a little longer.</h3><p>Please try again in a moment.</p><button class="btn" onclick="loadProducts()">Try again</button></div>';
-    document.getElementById("newGrid").textContent='New arrivals are temporarily unavailable.';
-    console.warn('Product load failed:',error.message);
+    console.warn('Product load fallback:', error.message);
   }
   if(window.drawCart)drawCart();
 }

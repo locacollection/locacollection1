@@ -20,3 +20,13 @@ body{font-size:15px;line-height:1.5}.wrap{width:min(var(--max),calc(100% - 64px)
 .sub-chip:hover{background:#e7f0e3;color:var(--ink);border-color:#b5cbb0}
 .sub-chip.active{background:var(--ink);color:white;border-color:var(--ink);font-weight:600}
 
+/* Pakistani Storefront Enhancements: Badges & Tags */
+.product-badges{position:absolute;left:10px;top:10px;display:flex;flex-direction:column;gap:5px;z-index:3}
+.badge.new-badge{position:static;background:#e9f4e4;color:#244c2c;font-weight:600;border:1px solid #c7e1be;padding:4px 8px;border-radius:6px;font-size:9px;letter-spacing:.02em;text-transform:none}
+.badge.sale-badge{position:static;background:#faece8;color:#9b2c15;font-weight:700;border:1px solid #f3cfc6;padding:4px 8px;border-radius:6px;font-size:9px;letter-spacing:.04em}
+.category-row{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:3px}
+.delivery-pill{font-size:9px;color:#2d5c3f;background:#edf5e9;padding:2px 6px;border-radius:4px;font-weight:500;white-space:nowrap}
+.hero-photo{background-image:linear-gradient(90deg,rgba(16,43,35,0.4),rgba(0,0,0,0.05) 60%),url('/assets/images/hero_pakistani_fashion_1789929181786.jpg');background-size:cover;background-position:center 25%}
+.editorial-photo{background-image:url('/assets/images/pakistani_velvet_shawl_1789929298856.jpg');background-size:cover;background-position:center}
+
+
