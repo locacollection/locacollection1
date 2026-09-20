@@ -43,7 +43,7 @@ LOCA.normalizeProduct = function(p, i){
   };
 };
 
-LOCA.escape = value => String(value ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+LOCA.esc = LOCA.escape = value => String(value ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 LOCA.safeImage = value => {
   if (!value || typeof value !== 'string') return 'assets/product-placeholder.svg';
   const trimmed = value.trim();
