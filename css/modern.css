@@ -9,3 +9,14 @@ body{font-size:15px;line-height:1.5}.wrap{width:min(var(--max),calc(100% - 64px)
 
 /* Database-driven product descriptions. */
 .product-description{margin:12px 0 4px;font-size:12px;color:var(--muted)}.product-description summary{cursor:pointer;color:var(--ink);padding:6px 0}.product-description p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}.catalog-empty{grid-column:1/-1;color:var(--muted);padding:20px 0}.product-info h3{overflow-wrap:anywhere}
+
+/* Category filter styling with subcategories */
+.filters{display:flex;flex-direction:column;gap:10px;width:100%}
+.main-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sub-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 14px;background:#f3f7f0;border-radius:12px;border:1px solid #e1ebd9;animation:subFilterFade .2s ease}
+@keyframes subFilterFade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+.sub-filter-label{font-size:11px;font-weight:600;color:var(--accent);letter-spacing:.02em;margin-right:4px}
+.sub-chip{border:1px solid #cad8c4;background:white;color:var(--muted);font-size:11px;font-weight:500;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .15s}
+.sub-chip:hover{background:#e7f0e3;color:var(--ink);border-color:#b5cbb0}
+.sub-chip.active{background:var(--ink);color:white;border-color:var(--ink);font-weight:600}
+

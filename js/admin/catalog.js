@@ -54,8 +54,23 @@
     message('productEditorMessage','');preview();$('productEditor').showModal();$('productName').focus();
   }
   window.renderProducts = function() {
-    const query=$('catalogSearch').value.trim().toLowerCase();const visibility=$('catalogVisibility').value;
-    const list=products.filter(p=>(visibility==='all'||(visibility==='published'?p.active:!p.active))&&`${p.name} ${p.category}`.toLowerCase().includes(query));
+    const query=$('catalogSearch').value.trim().toLowerCase();
+    const visibility=$('catalogVisibility').value;
+    const catFilter=($('catalogCategory')?.value || 'all').toLowerCase();
+    const list=products.filter(p=>{
+      const matchVis = visibility==='all'||(visibility==='published'?p.active:!p.active);
+      const matchQuery = `${p.name} ${p.category}`.toLowerCase().includes(query);
+      let matchCat = true;
+      if (catFilter !== 'all') {
+        const prodCat = (p.category || '').toLowerCase();
+        if (catFilter.includes(' - ')) {
+          matchCat = prodCat.includes(catFilter) || prodCat === catFilter;
+        } else {
+          matchCat = prodCat.includes(catFilter);
+        }
+      }
+      return matchVis && matchQuery && matchCat;
+    });
     $('catalogCount').textContent=`${list.length} of ${products.length} products · ${products.filter(p=>p.active).length} published`;
     $('productsBody').innerHTML=list.length?list.map(p=>`<article class="catalog-card"><img src="${escape(imageUrl(p.image_url)||placeholder)}" alt="${escape(p.name)}" loading="lazy"><div class="catalog-card-copy"><span class="muted">${escape(p.category)}</span><h3>${escape(p.name)}</h3><p>${escape(p.description||'No description yet.')}</p><strong>${money(p.price)}</strong><div class="catalog-card-foot"><span class="status ${p.active?'Confirmed':''}">${p.active?'Published':'Hidden'}</span><button class="btn alt" type="button" data-edit="${escape(p.id)}">Edit</button></div></div></article>`).join(''):'<p class="empty">No products match. Add a product or adjust your filters.</p>';
     $('productsBody').querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{img.src=placeholder;},{once:true}));
@@ -99,6 +114,7 @@
   $('productsBody').addEventListener('click',e=>{const button=e.target.closest('[data-edit]');if(button)openEditor(button.dataset.edit);});
   $('catalogSearch').addEventListener('input',renderProducts);
   $('catalogVisibility').addEventListener('change',renderProducts);
+  $('catalogCategory')?.addEventListener('change',renderProducts);
   $('refreshProducts').addEventListener('click',async()=>{try{await refreshProducts();message('catalogMessage','Products refreshed.');}catch(e){message('catalogMessage',e.message,true);}});
   $('productForm').addEventListener('submit',save);
   $('productForm').addEventListener('input',preview);

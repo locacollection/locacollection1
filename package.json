@@ -1,0 +1,16 @@
+{
+  "name": "locacollection",
+  "version": "1.0.0",
+  "description": "LOCA COLLECTION — contemporary Pakistani fashion.",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "node -e \"console.log('Build complete')\"",
+    "start": "node server.js",
+    "test": "node tests/catalog-validation.cjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "express": "^4.21.2"
+  }
+}

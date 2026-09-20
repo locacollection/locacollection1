@@ -41,12 +41,51 @@ LOCA.productCard = function(p){
 
 LOCA.matchesFilter = function(p){
   const c = (p.cat || "").toLowerCase();
-  if(LOCA.filter === "All") return true;
-  if(LOCA.filter === "Women") return c.includes("women") || c.includes("woman") || c.includes("ladies");
-  if(LOCA.filter === "Men") return /\b(men|man|mens|male)\b/.test(c);
-  if(LOCA.filter === "Footwear") return /footwear|shoe|chappal|khussa|sandal|slide|peshawari/.test(c);
-  if(LOCA.filter === "Accessories") return /accessor|bag|jewell|jewelry|scarf|stole|wallet|belt|cap|fragrance|perfume/.test(c);
-  return c === LOCA.filter.toLowerCase();
+  const filter = LOCA.filter;
+  if(filter === "All") return true;
+
+  // Exact match first (handles specific subcategories like "Footwear - Men", "Accessories - Women", etc.)
+  if(c === filter.toLowerCase()) return true;
+
+  // If filtering by a specific subcategory (e.g. contains " - ")
+  if(filter.includes(" - ")) {
+    const parts = filter.split(" - ");
+    const main = parts[0].trim().toLowerCase();
+    const sub = parts[1].trim().toLowerCase();
+    
+    // Check if product's category matches or description/name has relevant subcategory keywords
+    if(c.includes(sub)) return true;
+    if(filter === "Footwear - Men") {
+      return (c.includes("footwear") || c.includes("shoe") || c.includes("chappal") || c.includes("khussa")) && (c.includes("men") || /\b(men|man|mens|male)\b/.test(p.name.toLowerCase()));
+    }
+    if(filter === "Footwear - Women") {
+      return (c.includes("footwear") || c.includes("shoe") || c.includes("khussa") || c.includes("heel") || c.includes("sandal")) && (c.includes("women") || /\b(women|woman|ladies)\b/.test(p.name.toLowerCase()));
+    }
+    if(filter === "Accessories - Men") {
+      return (c.includes("accessor") || c.includes("wallet") || c.includes("belt") || c.includes("watch")) && (c.includes("men") || /\b(men|man|mens|male)\b/.test(p.name.toLowerCase()));
+    }
+    if(filter === "Accessories - Women") {
+      return (c.includes("accessor") || c.includes("bag") || c.includes("clutch") || c.includes("jewel") || c.includes("scarf")) && !c.includes("men") && !/\b(men|man|mens|male)\b/.test(p.name.toLowerCase());
+    }
+    return c.includes(sub) || p.name.toLowerCase().includes(sub);
+  }
+
+  // Main category filters
+  if(filter === "Women") {
+    // Must be women's fashion and NOT explicitly men's footwear/accessories
+    if(c.includes("men") && !c.includes("women")) return false;
+    return c.includes("women") || c.includes("woman") || c.includes("ladies");
+  }
+  if(filter === "Men") {
+    if(c.includes("women") || c.includes("woman") || c.includes("ladies")) return false;
+    return /\b(men|man|mens|male)\b/.test(c);
+  }
+  if(filter === "Footwear") return /footwear|shoe|chappal|khussa|sandal|slide|peshawari|loafer|heel/.test(c);
+  if(filter === "Accessories") return /accessor|bag|jewell|jewelry|scarf|stole|wallet|belt|cap|clutch|watch/.test(c);
+  if(filter === "Fragrance") return /fragrance|perfume|attar|oudh|mist|scent/.test(c);
+  if(filter === "Kids") return /kid|teen|boy|girl|child/.test(c);
+
+  return c.includes(filter.toLowerCase());
 };
 
 async function loadProducts(){
@@ -80,8 +119,48 @@ function render(){
 function initStoreUI(){
   const filters = document.getElementById("filters");
   if(filters){
-    const categories=[...new Set(['All','Women','Men','Footwear','Accessories',...LOCA.products.map(p=>p.cat).filter(Boolean)])];
-    filters.innerHTML=categories.map(x=>`<button class="filter ${x===LOCA.filter?'active':''}" data-category="${LOCA.escape(x)}" onclick="setFilter(this.dataset.category,this)">${LOCA.escape(x)}</button>`).join('');
+    const taxonomy = window.LOCA.CATEGORY_TAXONOMY || [
+      { id: "All", label: "All", subcategories: [] },
+      { id: "Women", label: "Women", subcategories: [] },
+      { id: "Men", label: "Men", subcategories: [] },
+      { id: "Footwear", label: "Footwear", subcategories: [] },
+      { id: "Accessories", label: "Accessories", subcategories: [] }
+    ];
+
+    // Determine currently active main category (handles when subcategory is chosen)
+    let activeMain = "All";
+    if (LOCA.filter !== "All") {
+      if (LOCA.filter.includes(" - ")) {
+        activeMain = LOCA.filter.split(" - ")[0].trim();
+      } else {
+        const found = taxonomy.find(t => t.id === LOCA.filter);
+        if (found) activeMain = found.id;
+        else activeMain = LOCA.filter;
+      }
+    }
+
+    const currentTaxon = taxonomy.find(t => t.id === activeMain);
+    const hasSubcategories = currentTaxon && currentTaxon.subcategories && currentTaxon.subcategories.length > 0;
+
+    let html = `<div class="main-filters">`;
+    html += taxonomy.map(x => {
+      const isMainActive = x.id === activeMain;
+      return `<button type="button" class="filter ${isMainActive ? 'active' : ''}" data-category="${LOCA.escape(x.id)}" onclick="setFilter(this.dataset.category, this)">${LOCA.escape(x.label || x.id)}</button>`;
+    }).join('');
+    html += `</div>`;
+
+    if (hasSubcategories) {
+      html += `<div class="sub-filters" id="subFilters">`;
+      html += `<span class="sub-filter-label">Explore ${LOCA.escape(currentTaxon.label || currentTaxon.id)}:</span>`;
+      html += `<button type="button" class="sub-chip ${LOCA.filter === activeMain ? 'active' : ''}" data-category="${LOCA.escape(activeMain)}" onclick="setFilter(this.dataset.category, this)">All ${LOCA.escape(currentTaxon.label || currentTaxon.id)}</button>`;
+      html += currentTaxon.subcategories.map(sub => {
+        const isSubActive = LOCA.filter === sub.id;
+        return `<button type="button" class="sub-chip ${isSubActive ? 'active' : ''}" data-category="${LOCA.escape(sub.id)}" onclick="setFilter(this.dataset.category, this)">${LOCA.escape(sub.label)}</button>`;
+      }).join('');
+      html += `</div>`;
+    }
+
+    filters.innerHTML = html;
   }
   const newGrid = document.getElementById("newGrid");
   if(newGrid) newGrid.innerHTML = LOCA.products.filter(p => p.new).slice(0,4).map(LOCA.productCard).join("") || '<p class="catalog-empty">New arrivals are on their way. Explore the collection below.</p>';
@@ -91,15 +170,14 @@ function initStoreUI(){
 
 function setFilter(x, button){
   LOCA.filter = x;
-  document.querySelectorAll(".filter").forEach(e => e.classList.remove("active"));
-  if(button) button.classList.add("active");
-  render();
+  initStoreUI();
 }
 
 function setFilterFromLink(x){
   setTimeout(() => {
-    const button = [...document.querySelectorAll(".filter")].find(e => e.textContent === x);
-    setFilter(x, button);
+    LOCA.filter = x;
+    initStoreUI();
+    document.getElementById("shop")?.scrollIntoView({behavior:"smooth"});
   }, 50);
 }
 

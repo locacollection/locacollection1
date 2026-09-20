@@ -1,0 +1,8 @@
+{
+  "name": "LOCA COLLECTION",
+  "description": "Contemporary Pakistani fashion storefront and catalog.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
