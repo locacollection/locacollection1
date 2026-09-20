@@ -218,7 +218,7 @@ autocomplete="off">
 <div class="field"><label for="productImageUrl">Or use an image link</label><input id="productImageUrl" type="url" placeholder="https://..."><small class="muted">A selected upload takes priority over this link.</small></div>
 <div class="editor-checks"><label><input id="productActive" type="checkbox"> Publish on storefront</label><label><input id="productNew" type="checkbox"> Show in New arrivals</label></div>
 </div><aside class="editor-preview"><span class="muted">Listing preview</span><img id="previewImage" src="assets/product-placeholder.svg" alt="Product thumbnail preview"><span id="previewCategory"></span><h3 id="previewName">Your product name</h3><strong id="previewPrice">PKR 0</strong><p id="previewDescription"></p><span id="previewVisibility" class="status">Hidden</span></aside></div>
-<p id="productEditorMessage" role="status" aria-live="polite"></p><div class="editor-actions"><button type="button" class="btn alt" id="cancelProductEdit">Cancel</button><button type="submit" class="btn" id="saveProductBtn">Save product</button></div></form></dialog>
+<p id="productEditorMessage" role="status" aria-live="polite"></p><div class="editor-actions"><button type="button" class="btn danger" id="deleteProductBtn" style="margin-right:auto;display:none;">Delete product</button><button type="button" class="btn alt" id="cancelProductEdit">Cancel</button><button type="submit" class="btn" id="saveProductBtn">Save product</button></div></form></dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>

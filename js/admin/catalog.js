@@ -51,6 +51,10 @@
     $('productImageUrl').value=product?.image_url??'';
     $('productActive').checked=product?.active??false;
     $('productNew').checked=product?.is_new??false;
+    if ($('deleteProductBtn')) {
+      $('deleteProductBtn').style.display = product ? 'inline-block' : 'none';
+      $('deleteProductBtn').disabled = false;
+    }
     message('productEditorMessage','');preview();$('productEditor').showModal();$('productName').focus();
   }
   window.renderProducts = function() {
@@ -72,12 +76,36 @@
       return matchVis && matchQuery && matchCat;
     });
     $('catalogCount').textContent=`${list.length} of ${products.length} products · ${products.filter(p=>p.active).length} published`;
-    $('productsBody').innerHTML=list.length?list.map(p=>`<article class="catalog-card"><img src="${escape(imageUrl(p.image_url)||placeholder)}" alt="${escape(p.name)}" loading="lazy"><div class="catalog-card-copy"><span class="muted">${escape(p.category)}</span><h3>${escape(p.name)}</h3><p>${escape(p.description||'No description yet.')}</p><strong>${money(p.price)}</strong><div class="catalog-card-foot"><span class="status ${p.active?'Confirmed':''}">${p.active?'Published':'Hidden'}</span><button class="btn alt" type="button" data-edit="${escape(p.id)}">Edit</button></div></div></article>`).join(''):'<p class="empty">No products match. Add a product or adjust your filters.</p>';
+    $('productsBody').innerHTML=list.length?list.map(p=>`<article class="catalog-card"><img src="${escape(imageUrl(p.image_url)||placeholder)}" alt="${escape(p.name)}" loading="lazy"><div class="catalog-card-copy"><span class="muted">${escape(p.category)}</span><h3>${escape(p.name)}</h3><p>${escape(p.description||'No description yet.')}</p><strong>${money(p.price)}</strong><div class="catalog-card-foot"><span class="status ${p.active?'Confirmed':''}">${p.active?'Published':'Hidden'}</span><div style="display:flex;gap:6px;"><button class="btn alt" type="button" data-edit="${escape(p.id)}">Edit</button><button class="btn danger-ghost" type="button" data-delete="${escape(p.id)}" title="Delete product">Delete</button></div></div></div></article>`).join(''):'<p class="empty">No products match. Add a product or adjust your filters.</p>';
     $('productsBody').querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{img.src=placeholder;},{once:true}));
   };
   async function refreshProducts() {
     const {data,error}=await db.from('products').select('*').order('id');
     if(error)throw error;products=data||[];renderProducts();
+  }
+  async function deleteProduct(id) {
+    const prod = products.find(p => String(p.id) === String(id));
+    if (!prod) return;
+    const confirmed = window.confirm(`Are you sure you want to permanently delete "${prod.name}"? This cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      if (!await isCurrentUserAdmin()) throw new Error('Your admin session has expired. Please sign in again.');
+      message('catalogMessage', `Deleting "${prod.name}"…`);
+      const { error } = await db.from('products').delete().eq('id', prod.id);
+      if (error) throw error;
+      products = products.filter(p => String(p.id) !== String(prod.id));
+      renderProducts();
+      if (editingId && String(editingId) === String(prod.id)) {
+        closeEditor();
+      }
+      message('catalogMessage', `"${prod.name}" was permanently deleted.`);
+    } catch (err) {
+      const errMsg = err.message || 'Could not delete product.';
+      message('catalogMessage', errMsg, true);
+      if ($('productEditor')?.open) {
+        message('productEditorMessage', errMsg, true);
+      }
+    }
   }
   async function save(event) {
     event.preventDefault();if(saving)return;
@@ -111,7 +139,15 @@
     finally {saving=false;controls.forEach(c=>c.disabled=false);}
   }
   $('addProductBtn').addEventListener('click',()=>openEditor());
-  $('productsBody').addEventListener('click',e=>{const button=e.target.closest('[data-edit]');if(button)openEditor(button.dataset.edit);});
+  $('productsBody').addEventListener('click',e=>{
+    const editBtn=e.target.closest('[data-edit]');
+    if(editBtn) return openEditor(editBtn.dataset.edit);
+    const delBtn=e.target.closest('[data-delete]');
+    if(delBtn) return deleteProduct(delBtn.dataset.delete);
+  });
+  $('deleteProductBtn')?.addEventListener('click',()=>{
+    if(editingId) deleteProduct(editingId);
+  });
   $('catalogSearch').addEventListener('input',renderProducts);
   $('catalogVisibility').addEventListener('change',renderProducts);
   $('catalogCategory')?.addEventListener('change',renderProducts);
