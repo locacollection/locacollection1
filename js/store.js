@@ -136,24 +136,17 @@ async function loadProducts(){
     const {data,error}=await LOCA.db.from("products").select("*").eq("active",true).order("id");
     if(error)throw error;
     
-    // Combine database products with our curated 32-item Pakistani fashion catalog
+    // Only render active database products. Catalog-only fallback items cannot be
+    // saved to cart_items because that table enforces a products(id) foreign key.
     const dbProducts = (data || []).filter(p => !deletedIds.has(String(p.id)));
-    const dbIds = new Set(dbProducts.map(p => Number(p.id)));
-    const catalogList = window.LOCA?.CATALOG_PRODUCTS || [];
-
-    const combined = [...dbProducts];
-    for (const item of catalogList) {
-      if (!dbIds.has(Number(item.id)) && !deletedIds.has(String(item.id))) {
-        combined.push(item);
-      }
-    }
-
-    LOCA.products = combined.map(LOCA.normalizeProduct);
+    LOCA.products = dbProducts.map(LOCA.normalizeProduct);
     initStoreUI();
   } catch(error) {
-    LOCA.products = (window.LOCA?.CATALOG_PRODUCTS || []).filter(p => !deletedIds.has(String(p.id))).map(LOCA.normalizeProduct);
+    // Do not render catalog-only demo items when the database is unavailable:
+    // they cannot be checked out or persisted in an account cart.
+    LOCA.products = [];
     initStoreUI();
-    console.warn('Product load fallback:', error.message);
+    console.warn('Product load failed:', error.message);
   }
   if(window.drawCart)drawCart();
 }
