@@ -117,6 +117,7 @@ async function openAccount(){
   try{
     await LOCA.ensureProfile();
     populateProfileForm();
+    renderAddressBook();
     document.getElementById("accountModal")?.classList.add("open");
     document.body.classList.add("lock");
     if(window.loadMyOrders) loadMyOrders();
@@ -178,6 +179,175 @@ function showAccountMessage(message){
   setTimeout(() => { box.hidden = true; }, 2500);
 }
 
+// Multi-Address Management
+function getAddressStorageKey(){
+  return LOCA.currentUser ? ("loca_addresses_" + LOCA.currentUser.id) : null;
+}
+
+function getSavedAddresses(){
+  const key = getAddressStorageKey();
+  if(!key) return [];
+  try{
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch(e){
+    return [];
+  }
+}
+
+function saveAddressesList(list){
+  const key = getAddressStorageKey();
+  if(!key) return;
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+function renderAddressBook(){
+  const container = document.getElementById("addressBookList");
+  if(!container) return;
+  const addresses = getSavedAddresses();
+  if(!addresses.length){
+    container.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0">No alternate delivery addresses added yet. Add work, home, or family addresses above.</div>';
+    return;
+  }
+  container.innerHTML = addresses.map((addr, idx) => `
+    <div class="address-card ${addr.isDefault ? 'is-default' : ''}">
+      <div class="address-card-header">
+        <div class="address-card-title">
+          <span>${LOCA.esc(addr.title || 'Address')}</span>
+          ${addr.isDefault ? '<span class="badge-default">DEFAULT</span>' : ''}
+        </div>
+        <div class="address-card-actions">
+          ${!addr.isDefault ? `<button type="button" onclick="setDefaultAddress(${idx})">Set as default</button>` : ''}
+          <button type="button" class="del" onclick="deleteAddress(${idx})">Delete</button>
+        </div>
+      </div>
+      <div class="address-card-body">
+        <strong>${LOCA.esc(addr.name || '')}</strong> · ${LOCA.esc(addr.phone || '')}<br>
+        ${LOCA.esc(addr.address || '')}, ${LOCA.esc(addr.city || '')}
+      </div>
+    </div>
+  `).join("");
+}
+
+function toggleAddAddressForm(){
+  const form = document.getElementById("newAddressForm");
+  if(!form) return;
+  const isHidden = form.style.display === "none" || !form.style.display;
+  form.style.display = isHidden ? "block" : "none";
+  if(isHidden){
+    document.getElementById("newAddrTitle").value = "";
+    document.getElementById("newAddrName").value = LOCA.profile?.full_name || "";
+    document.getElementById("newAddrPhone").value = LOCA.profile?.phone || "";
+    document.getElementById("newAddrCity").value = LOCA.profile?.city || "";
+    document.getElementById("newAddrStreet").value = "";
+    document.getElementById("newAddrDefault").checked = false;
+  }
+}
+
+async function saveNewAddress(e){
+  if(e) e.preventDefault();
+  if(!LOCA.currentUser) return;
+  const title = document.getElementById("newAddrTitle").value.trim();
+  const name = document.getElementById("newAddrName").value.trim();
+  const phone = document.getElementById("newAddrPhone").value.trim();
+  const city = document.getElementById("newAddrCity").value.trim();
+  const street = document.getElementById("newAddrStreet").value.trim();
+  const isDefault = document.getElementById("newAddrDefault").checked;
+
+  if(!title || !name || !phone || !city || !street){
+    alert("Please fill all fields for this address.");
+    return;
+  }
+
+  let addresses = getSavedAddresses();
+  if(isDefault){
+    addresses = addresses.map(a => ({...a, isDefault: false}));
+  }
+
+  addresses.push({
+    id: 'addr_' + Date.now(),
+    title,
+    name,
+    phone,
+    city,
+    address: street,
+    isDefault: !!isDefault
+  });
+
+  saveAddressesList(addresses);
+
+  if(isDefault){
+    // Also update main profile default
+    try {
+      const payload = {
+        id: LOCA.currentUser.id,
+        email: LOCA.currentUser.email || "",
+        full_name: name,
+        phone: phone,
+        address: street,
+        city: city,
+        updated_at: new Date().toISOString()
+      };
+      const {data, error} = await LOCA.db.from("profiles").upsert(payload).select("*").single();
+      if(!error && data) {
+        LOCA.profile = data;
+        populateProfileForm();
+      }
+    } catch(err){
+      console.warn("Could not sync default profile to DB:", err);
+    }
+  }
+
+  toggleAddAddressForm();
+  renderAddressBook();
+  showAccountMessage("Address added to your address book.");
+}
+
+async function setDefaultAddress(index){
+  let addresses = getSavedAddresses();
+  if(!addresses[index]) return;
+
+  addresses = addresses.map((a, i) => ({
+    ...a,
+    isDefault: (i === index)
+  }));
+  saveAddressesList(addresses);
+
+  const selected = addresses[index];
+  if(selected && LOCA.currentUser){
+    try {
+      const payload = {
+        id: LOCA.currentUser.id,
+        email: LOCA.currentUser.email || "",
+        full_name: selected.name || LOCA.profile?.full_name || "",
+        phone: selected.phone || LOCA.profile?.phone || "",
+        address: selected.address,
+        city: selected.city,
+        updated_at: new Date().toISOString()
+      };
+      const {data, error} = await LOCA.db.from("profiles").upsert(payload).select("*").single();
+      if(!error && data) {
+        LOCA.profile = data;
+        populateProfileForm();
+      }
+    } catch(err){
+      console.warn("Could not sync default profile:", err);
+    }
+  }
+
+  renderAddressBook();
+  showAccountMessage("Default address updated.");
+}
+
+function deleteAddress(index){
+  let addresses = getSavedAddresses();
+  if(!addresses[index]) return;
+  if(!confirm("Remove this saved address?")) return;
+  addresses.splice(index, 1);
+  saveAddressesList(addresses);
+  renderAddressBook();
+  showAccountMessage("Address removed.");
+}
+
 async function signOutCustomer(){
   try{
     await LOCA.db.auth.signOut();
@@ -225,3 +395,10 @@ window.closeAccount = closeAccount;
 window.saveProfile = saveProfile;
 window.signOutCustomer = signOutCustomer;
 window.initAuth = initAuth;
+window.toggleAddAddressForm = toggleAddAddressForm;
+window.saveNewAddress = saveNewAddress;
+window.setDefaultAddress = setDefaultAddress;
+window.deleteAddress = deleteAddress;
+window.renderAddressBook = renderAddressBook;
+LOCA.getSavedAddresses = getSavedAddresses;
+LOCA.saveAddressesList = saveAddressesList;

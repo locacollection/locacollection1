@@ -11,6 +11,99 @@ function cartTotal(){
   }, 0);
 }
 
+let selectedCheckoutAddressId = 'default';
+
+function renderCheckoutAddressOptions(){
+  const wrapper = document.getElementById("checkoutSavedWrapper");
+  const pills = document.getElementById("coAddressPills");
+  const preview = document.getElementById("coActiveAddressPreview");
+  if(!wrapper || !pills) return;
+
+  const p = LOCA.profile || {};
+  const saved = (LOCA.getSavedAddresses ? LOCA.getSavedAddresses() : []);
+
+  // Construct options list
+  const options = [];
+  if(p.address || p.full_name || p.city){
+    options.push({
+      id: 'default',
+      title: 'Default Profile',
+      name: p.full_name || '',
+      phone: p.phone || '',
+      city: p.city || '',
+      address: p.address || '',
+      isDefault: true
+    });
+  }
+
+  saved.forEach(addr => {
+    options.push(addr);
+  });
+
+  if(!options.length){
+    wrapper.style.display = 'none';
+    return;
+  }
+
+  wrapper.style.display = 'block';
+
+  // If no current selection or invalid selection, pick default
+  const defaultOption = options.find(o => o.isDefault) || options[0];
+  if(!options.some(o => o.id === selectedCheckoutAddressId)){
+    selectedCheckoutAddressId = defaultOption.id;
+  }
+
+  pills.innerHTML = options.map(opt => `
+    <button type="button" class="co-address-pill ${opt.id === selectedCheckoutAddressId ? 'active' : ''}" onclick="selectCheckoutAddress('${opt.id}')">
+      <span>${LOCA.esc(opt.title || 'Address')}</span>
+      ${opt.isDefault ? '<span class="badge-default">DEFAULT</span>' : ''}
+    </button>
+  `).join("");
+
+  const active = options.find(o => o.id === selectedCheckoutAddressId) || defaultOption;
+  if(active){
+    if(preview){
+      preview.textContent = `Delivering to: ${active.name || p.full_name || 'Customer'} · ${active.phone || p.phone || ''} · ${active.address}, ${active.city}`;
+    }
+    applyAddressToCheckout(active);
+  }
+}
+
+function applyAddressToCheckout(addr){
+  if(!addr) return;
+  const nameEl = document.getElementById("coName");
+  const phoneEl = document.getElementById("coPhone");
+  const addrEl = document.getElementById("coAddress");
+  const cityEl = document.getElementById("coCity");
+
+  if(nameEl && addr.name) nameEl.value = addr.name;
+  if(phoneEl && addr.phone) phoneEl.value = addr.phone;
+  if(addrEl && addr.address) addrEl.value = addr.address;
+  if(cityEl && addr.city) cityEl.value = addr.city;
+}
+
+function selectCheckoutAddress(id){
+  selectedCheckoutAddressId = id;
+  const p = LOCA.profile || {};
+  const saved = (LOCA.getSavedAddresses ? LOCA.getSavedAddresses() : []);
+  let found = null;
+  if(id === 'default'){
+    found = {
+      id: 'default',
+      title: 'Default Profile',
+      name: p.full_name || '',
+      phone: p.phone || '',
+      city: p.city || '',
+      address: p.address || '',
+      isDefault: true
+    };
+  } else {
+    found = saved.find(a => a.id === id);
+  }
+  renderCheckoutAddressOptions();
+  if(found) applyAddressToCheckout(found);
+}
+
 async function openCheckout(){
   if(!cartEntries().length){
     alert("Your bag is empty.");
@@ -32,6 +125,10 @@ async function openCheckout(){
   document.getElementById("coAddress").value = p.address || "";
   document.getElementById("coCity").value = p.city || "";
   document.getElementById("coTotal").textContent = LOCA.money(cartTotal());
+  
+  // Render quick saved addresses picker
+  renderCheckoutAddressOptions();
+
   document.getElementById("checkoutModal")?.classList.add("open");
   document.body.classList.add("lock");
 }
@@ -147,3 +244,5 @@ window.openCheckout = openCheckout;
 window.closeCheckout = closeCheckout;
 window.placeOrder = placeOrder;
 window.loadMyOrders = loadMyOrders;
+window.selectCheckoutAddress = selectCheckoutAddress;
+window.renderCheckoutAddressOptions = renderCheckoutAddressOptions;

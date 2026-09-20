@@ -29,4 +29,34 @@ body{font-size:15px;line-height:1.5}.wrap{width:min(var(--max),calc(100% - 64px)
 .hero-photo{background-image:linear-gradient(90deg,rgba(16,43,35,0.4),rgba(0,0,0,0.05) 60%),url('/assets/images/hero_pakistani_fashion_1789929181786.jpg');background-size:cover;background-position:center 25%}
 .editorial-photo{background-image:url('/assets/images/pakistani_velvet_shawl_1789929298856.jpg');background-size:cover;background-position:center}
 
+/* Multi-address and profile manager styling */
+.address-book{margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
+.address-book-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.address-book-head h5{margin:0;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:600;color:var(--ink)}
+.address-list{display:grid;gap:10px;margin-bottom:14px}
+.address-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fdfcf9;position:relative;transition:all .15s}
+.address-card.is-default{border-color:#276548;background:#f3f8f1}
+.address-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.address-card-title{font-weight:600;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:6px}
+.badge-default{background:#276548;color:white;font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;letter-spacing:.02em}
+.address-card-body{font-size:12px;line-height:1.5;color:var(--muted);margin-bottom:10px}
+.address-card-actions{display:flex;gap:8px;font-size:11px}
+.address-card-actions button{background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;color:var(--accent);font-size:11px}
+.address-card-actions button.del{color:#b91c1c}
+.add-address-form{background:#f8faf7;border:1px dashed var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.add-address-form h6{margin:0 0 10px;font-size:12px;font-weight:600;color:var(--ink);text-transform:uppercase;letter-spacing:.05em}
+
+/* Checkout Address Selection: Fast 1-Click Saved Address Picker */
+.co-saved-addresses{background:#f4f8f2;border:1px solid #d2e4ce;border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.co-saved-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.co-saved-head span{font-size:11px;font-weight:600;color:#244c2c;text-transform:uppercase;letter-spacing:.05em}
+.co-saved-head button{background:none;border:0;font-size:11px;color:#276548;cursor:pointer;text-decoration:underline;padding:0}
+.co-address-pills{display:flex;gap:8px;flex-wrap:wrap}
+.co-address-pill{border:1px solid #cad8c4;background:white;color:var(--ink);padding:8px 12px;border-radius:9px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.co-address-pill:hover{border-color:#276548;background:#fbfdfa}
+.co-address-pill.active{border-color:#276548;background:#276548;color:white}
+.co-address-pill.active .badge-default{background:white;color:#276548}
+.co-active-preview{font-size:11px;color:#2d5c3f;margin-top:8px;line-height:1.4}
+
+
 

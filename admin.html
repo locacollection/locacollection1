@@ -159,7 +159,13 @@ autocomplete="off">
 <section class="panel" id="customersSection" style="display:none">
 
 <div class="toolbar">
-<b>Customers</b>
+<div>
+<b>Customers &amp; User Accounts</b>
+<div class="muted" id="customerCount">Click any customer to inspect their full profile, saved addresses, and all sub-orders.</div>
+</div>
+<div>
+<input id="customerSearch" placeholder="Search customer name, email, city..." autocomplete="off">
+</div>
 </div>
 
 <div class="tablewrap">
@@ -171,7 +177,8 @@ autocomplete="off">
 <th>Email</th>
 <th>City</th>
 <th>Orders</th>
-<th>Spent</th>
+<th>Total Spent</th>
+<th>Action</th>
 </tr>
 </thead>
 <tbody id="customersBody"></tbody>

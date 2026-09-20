@@ -15,8 +15,10 @@ SUPABASE_KEY
 
 let orders=[];
 let customers=[];
+let profiles=[];
 let orderItems=[];
 let products=[];
+let expandedCustomerKeys = new Set();
 
 
 const money = value =>
@@ -139,7 +141,8 @@ const [
 ordersResult,
 customersResult,
 itemsResult,
-productsResult
+productsResult,
+profilesResult
 ] = await Promise.all([
 
 db.from("orders")
@@ -154,7 +157,10 @@ db.from("order_items")
 
 db.from("products")
 .select("*")
-.order("id")
+.order("id"),
+
+db.from("profiles")
+.select("*")
 
 ]);
 
@@ -176,6 +182,7 @@ orders=ordersResult.data || [];
 customers=customersResult.data || [];
 orderItems=itemsResult.data || [];
 products=productsResult.data || [];
+profiles=(profilesResult && !profilesResult.error) ? (profilesResult.data || []) : [];
 
 
 renderStats();
@@ -424,73 +431,218 @@ await load();
 }
 
 
-function renderCustomers(){
+function getCustomerOrders(c) {
+return orders.filter(o => {
+const cust = customer(o);
+if (c.user_id && o.user_id && String(o.user_id) === String(c.user_id)) return true;
+if (c.id && cust.id && String(cust.id) === String(c.id)) return true;
+if (c.email && cust.email && c.email.toLowerCase() === cust.email.toLowerCase()) return true;
+if (c.phone && cust.phone && c.phone === cust.phone) return true;
+return false;
+});
+}
 
+function toggleCustomerExpand(key) {
+if (expandedCustomerKeys.has(key)) {
+expandedCustomerKeys.delete(key);
+} else {
+expandedCustomerKeys.add(key);
+}
+renderCustomers();
+}
+
+function renderCustomers(){
 const map={};
 
-orders.forEach(order=>{
-
-const c=customer(order);
-
-const key =
-c.id ||
-c.email ||
-c.phone ||
-c.name;
-
-if(!map[key]){
-
-map[key]={
-...c,
-orders:0,
-spent:0
+// First integrate registered user profiles
+(profiles || []).forEach(p => {
+const key = p.id || p.email;
+if (!key) return;
+map[key] = {
+id: p.id,
+user_id: p.id,
+name: p.full_name || p.name || p.email.split('@')[0],
+email: p.email || "",
+phone: p.phone || "",
+city: p.city || "",
+address: p.address || "",
+is_registered: true,
+orders: 0,
+spent: 0
 };
-
-}
-
-map[key].orders++;
-
-if(order.status!=="Cancelled"){
-
-map[key].spent +=
-Number(order.total||0);
-
-}
-
 });
 
+// Also include all customers from the orders/customers table
+customers.forEach(c => {
+const key = c.email || c.phone || c.id || c.name;
+if (!key) return;
+if (!map[key]) {
+map[key] = {
+...c,
+user_id: c.user_id || c.id,
+orders: 0,
+spent: 0
+};
+} else {
+if (!map[key].phone && c.phone) map[key].phone = c.phone;
+if (!map[key].city && c.city) map[key].city = c.city;
+if (!map[key].address && c.address) map[key].address = c.address;
+}
+});
 
-const list=Object.values(map);
+// Now calculate orders and total spent accurately
+Object.keys(map).forEach(key => {
+const userEntry = map[key];
+const userOrders = getCustomerOrders(userEntry);
+userEntry.orders = userOrders.length;
+userEntry.spent = userOrders
+.filter(o => o.status !== "Cancelled")
+.reduce((sum, o) => sum + Number(o.total || 0), 0);
+userEntry._ordersList = userOrders;
+});
 
+// Also add any one-off orders whose customer details didn't match existing map
+orders.forEach(order => {
+const c = customer(order);
+const key = c.email || c.phone || c.id || c.name;
+if (key && !map[key]) {
+const userOrders = getCustomerOrders(c);
+map[key] = {
+...c,
+orders: userOrders.length,
+spent: userOrders.filter(o => o.status !== "Cancelled").reduce((sum, o) => sum + Number(o.total || 0), 0),
+_ordersList: userOrders
+};
+}
+});
 
-document.getElementById("customersBody")
-.innerHTML=list.length
+let list = Object.values(map);
 
-? list.map(c=>`
+// Customer search filter
+const q = (document.getElementById("customerSearch")?.value || "").trim().toLowerCase();
+if (q) {
+list = list.filter(c => 
+(c.name || "").toLowerCase().includes(q) ||
+(c.email || "").toLowerCase().includes(q) ||
+(c.phone || "").toLowerCase().includes(q) ||
+(c.city || "").toLowerCase().includes(q)
+);
+}
 
+const countEl = document.getElementById("customerCount");
+if (countEl) {
+countEl.textContent = `${list.length} user${list.length === 1 ? '' : 's'} registered / recorded. Click 'Sub-Orders' to see all orders from each user.`;
+}
+
+// Read saved addresses from local storage for multi-address preview
+let allLocalProfiles = {};
+try {
+for (let i = 0; i < localStorage.length; i++) {
+const k = localStorage.key(i);
+if (k && k.startsWith('loca_addresses_')) {
+const uid = k.replace('loca_addresses_', '');
+allLocalProfiles[uid] = JSON.parse(localStorage.getItem(k) || '[]');
+}
+}
+} catch(e) {}
+
+document.getElementById("customersBody").innerHTML = list.length
+? list.map((c, idx) => {
+const key = String(c.id || c.email || c.phone || idx);
+const isExpanded = expandedCustomerKeys.has(key);
+const userOrders = c._ordersList || getCustomerOrders(c);
+const savedAddresses = (c.user_id && allLocalProfiles[c.user_id]) ? allLocalProfiles[c.user_id] : [];
+
+let subOrdersHtml = '';
+if (isExpanded) {
+subOrdersHtml = `
+<tr class="customer-expand-row">
+<td colspan="7">
+<div class="customer-suborders">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+<h4>All Orders from ${esc(c.name)} (${userOrders.length})</h4>
+<button class="smallbtn" onclick="toggleCustomerExpand('${esc(key)}')">Hide sub-orders ▲</button>
+</div>
+
+${userOrders.length ? `
+<table class="suborders-table">
+<thead>
 <tr>
-
-<td><b>${esc(c.name)}</b></td>
-<td>${esc(c.phone)}</td>
-<td>${esc(c.email)}</td>
-<td>${esc(c.city)}</td>
-<td>${c.orders}</td>
-<td><b>${money(c.spent)}</b></td>
-
+<th>Order #</th>
+<th>Date</th>
+<th>Delivery Address</th>
+<th>Payment</th>
+<th>Total</th>
+<th>Status</th>
+<th>Action</th>
 </tr>
-
-`).join("")
-
-:`
-
+</thead>
+<tbody>
+${userOrders.map(o => `
 <tr>
-<td colspan="6" class="empty">
-No customers yet.
+<td><b>${esc(o.order_number || o.order_no || o.id)}</b></td>
+<td><span class="muted">${new Date(o.created_at).toLocaleString('en-PK')}</span></td>
+<td>${esc(customer(o).address || c.address || '—')}<br><small class="muted">${esc(customer(o).city || c.city || '')}</small></td>
+<td>${esc(o.payment_method || 'COD')}</td>
+<td><b>${money(o.total)}</b></td>
+<td><span class="status ${esc(o.status)}">${esc(o.status)}</span></td>
+<td><button class="smallbtn" onclick="viewOrder('${o.id}')">Inspect</button></td>
+</tr>
+`).join('')}
+</tbody>
+</table>
+` : `<p class="muted" style="margin:8px 0">No orders placed by this user yet.</p>`}
+
+<div class="customer-addresses-preview">
+<strong>Primary &amp; Saved Addresses for User:</strong>
+<div style="font-size:12px;line-height:1.6">
+<div>📍 <b>Primary/Default Address:</b> ${esc(c.address || 'Not set')}, ${esc(c.city || 'Pakistan')} ${c.phone ? `· 📞 ${esc(c.phone)}` : ''}</div>
+${savedAddresses.length ? `
+<div style="margin-top:8px">
+<b style="color:#2d6a4f">Alternate Saved Delivery Addresses (${savedAddresses.length}):</b>
+<ul style="margin:4px 0 0 18px;padding:0">
+${savedAddresses.map(a => `
+<li><b>${esc(a.title || 'Address')}:</b> ${esc(a.address)}, ${esc(a.city)} (Recipient: ${esc(a.name || c.name)}, ${esc(a.phone || c.phone)}) ${a.isDefault ? '<span class="badge-default">DEFAULT</span>' : ''}</li>
+`).join('')}
+</ul>
+</div>
+` : ''}
+</div>
+</div>
+
+</div>
 </td>
 </tr>
-
 `;
+}
 
+return `
+<tr>
+<td>
+<b>${esc(c.name)}</b>
+${c.is_registered ? `<span style="font-size:9px;background:#e1eee7;color:#2d6a4f;padding:2px 5px;border-radius:4px;margin-left:4px">Registered</span>` : ''}
+</td>
+<td>${esc(c.phone || "—")}</td>
+<td>${esc(c.email || "—")}</td>
+<td>${esc(c.city || "—")}</td>
+<td><b>${c.orders}</b></td>
+<td><b>${money(c.spent)}</b></td>
+<td>
+<button class="smallbtn" onclick="toggleCustomerExpand('${esc(key)}')">
+${isExpanded ? 'Hide sub-orders ▲' : 'View sub-orders ▼'}
+</button>
+</td>
+</tr>
+${subOrdersHtml}
+`;
+}).join("")
+: `
+<tr>
+<td colspan="7" class="empty">
+No customers found matching "${esc(q)}".
+</td>
+</tr>
+`;
 }
 
 
@@ -614,6 +766,11 @@ document.getElementById("search")
 
 document.getElementById("filter")
 .addEventListener("change",renderOrders);
+
+document.getElementById("customerSearch")
+?.addEventListener("input",renderCustomers);
+
+window.toggleCustomerExpand = toggleCustomerExpand;
 
 
 document.getElementById("closeModal")
