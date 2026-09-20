@@ -1,1 +1,1 @@
-document.addEventListener('DOMContentLoaded',async()=>{try{LOCA.cart=LOCA.readGuestCart();await loadProducts();drawCart();reveal();checkSupabaseConnection()}catch(err){console.error('LOCA initialization failed:',err)}});
+document.addEventListener('DOMContentLoaded',async()=>{try{LOCA.cart={};await loadProducts();drawCart();reveal();checkSupabaseConnection();await initAuth()}catch(err){console.error('LOCA initialization failed:',err)}});
