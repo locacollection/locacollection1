@@ -1,0 +1,69 @@
+
+*{box-sizing:border-box}
+body{margin:0;background:#f5f1ea;color:#171614;font-family:Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.wrap{max-width:1300px;margin:auto;padding:0 18px}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.loginbox{width:min(420px,100%);background:#fffdf9;border:1px solid #ddd6cb;padding:32px}
+.brand{font-family:Georgia,serif;font-size:25px;letter-spacing:.08em}
+h1,h2{font-family:Georgia,serif;font-weight:500}
+.loginbox h1{font-size:36px;margin:30px 0 8px}
+.muted{color:#716c64;font-size:13px}
+.field{margin:15px 0}
+.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#716c64;margin-bottom:7px}
+.field input,.field select{width:100%;padding:12px;border:1px solid #ddd6cb;background:#fff}
+.btn{padding:12px 18px;border:1px solid #171614;background:#171614;color:white}
+.btn.alt{background:transparent;color:#171614}
+.error{color:#8b2435;font-size:13px;margin-top:12px}
+.app{display:none}
+.top{position:sticky;top:0;background:#f5f1eaf5;border-bottom:1px solid #ddd6cb;z-index:10}
+.topin{height:68px;display:flex;align-items:center;justify-content:space-between}
+.smallbrand{font-family:Georgia,serif;font-size:20px;letter-spacing:.06em}
+.topright{display:flex;gap:8px;align-items:center}
+.main{padding:30px 0 60px}
+.head{display:flex;justify-content:space-between;align-items:end;margin-bottom:22px}
+.head h1{font-size:40px;margin:5px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:#fffdf9;border:1px solid #ddd6cb;padding:17px}
+.stat b{display:block;font-family:Georgia,serif;font-size:27px;margin-top:7px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{padding:10px 15px;background:transparent;border:1px solid #ddd6cb}
+.tab.active{background:#171614;color:white;border-color:#171614}
+.panel{background:#fffdf9;border:1px solid #ddd6cb;padding:18px}
+.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:15px}
+.toolbar input,.toolbar select{padding:10px;border:1px solid #ddd6cb;background:white}
+.tablewrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{text-align:left;border-bottom:1px solid #ddd6cb;padding:12px 9px;font-size:13px;vertical-align:top}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#716c64}
+.status{display:inline-block;padding:5px 8px;border-radius:20px;background:#eee;font-size:10px}
+.Pending{background:#f4e5c9;color:#a05a00}
+.Confirmed{background:#e1eee7;color:#2d6a4f}
+.Shipped{background:#e4e8f2;color:#43506d}
+.Delivered{background:#dcefe3;color:#2d6a4f}
+.Cancelled{background:#f1dddd;color:#8b2435}
+.smallbtn{padding:7px 9px;border:1px solid #ddd6cb;background:transparent;font-size:11px}
+.danger{color:#8b2435}
+.empty{text-align:center;padding:40px;color:#716c64}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:50;align-items:center;justify-content:center;padding:18px}
+.modal.open{display:flex}
+.modalbox{width:min(650px,100%);max-height:90vh;overflow:auto;background:#fffdf9;padding:22px}
+.modalhead{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd6cb;padding-bottom:12px}
+.modalhead h2{margin:0;font-size:28px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.detail{background:#f1ece4;padding:11px;font-size:13px}
+.detail span{display:block;color:#716c64;font-size:10px;text-transform:uppercase;margin-bottom:4px}
+.item{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #ddd6cb;font-size:13px}
+.total{display:flex;justify-content:space-between;padding-top:15px;font-family:Georgia,serif;font-size:22px}
+.note{margin-top:15px;padding:12px;background:#eee9e1;color:#716c64;font-size:12px;line-height:1.5}
+@media(max-width:800px){
+.stats{grid-template-columns:1fr 1fr}
+.head{display:block}
+.grid{grid-template-columns:1fr}
+}
+@media(max-width:500px){
+.wrap{padding:0 12px}
+.topright a{display:none}
+.smallbrand{font-size:16px}
+}

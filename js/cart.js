@@ -163,9 +163,9 @@ function drawCart(){
     const p = LOCA.products.find(x => String(x.id) === String(id));
     if(!p) return "";
     return `<div class="cart-item">
-      <div class="mini"><img src="${p.image || LOCA.images[0]}" alt=""></div>
+      <div class="mini"><img src="${LOCA.escape(LOCA.safeImage(p.image))}" alt=""></div>
       <div class="cart-item-copy">
-        <strong>${p.name}</strong>
+        <strong>${LOCA.escape(p.name)}</strong>
         <p>${LOCA.money(p.price)}</p>
         <div class="qty-row">
           <button type="button" onclick="changeCartQty(${id},-1)">−</button>
@@ -216,3 +216,4 @@ window.clearCart = clearCart;
 window.drawCart = drawCart;
 window.toggleCart = toggleCart;
 window.openCartDrawer = openCartDrawer;
+

@@ -1,0 +1,109 @@
+/* Product editing is independent of order/customer management. */
+(() => {
+  const $ = id => document.getElementById(id);
+  const placeholder = 'assets/product-placeholder.svg';
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function imageUrl(value) {
+    if (!value) return '';
+    try { const url = new URL(value); return url.protocol === 'https:' ? url.href : ''; } catch { return ''; }
+  }
+  function validate(values, file) {
+    if (!values.name.trim() || !values.category.trim()) throw new Error('Enter a product name and category.');
+    if (values.name.length > 160 || values.category.length > 80 || values.description.length > 5000) throw new Error('Please shorten the product details.');
+    if (values.price === '' || !Number.isInteger(Number(values.price)) || Number(values.price) < 0 || Number(values.price) > 2147483647) throw new Error('Enter a valid whole-rupee price.');
+    if (values.old_price !== '' && (!Number.isInteger(Number(values.old_price)) || Number(values.old_price) <= Number(values.price) || Number(values.old_price) > 2147483647)) throw new Error('Original price must be higher than the selling price, or left empty.');
+    if (!file && values.image_url && !imageUrl(values.image_url)) throw new Error('Use a valid HTTPS image link.');
+    if (file && (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 5242880 || file.size === 0)) throw new Error('Choose a JPG, PNG or WebP image between 1 byte and 5 MB.');
+    return {name:values.name.trim(),category:values.category.trim(),price:Number(values.price),old_price:values.old_price === '' ? null : Number(values.old_price),description:values.description.trim(),image_url:imageUrl(values.image_url) || null,active:values.active,is_new:values.is_new};
+  }
+  window.CatalogValidation = {validate, imageUrl};
+  let editingId = null, saving = false, previewUrl = '', uploaded = null, opener = null;
+  const values = () => ({name:$('productName').value,category:$('productCategory').value,price:$('productPrice').value,old_price:$('productOldPrice').value,description:$('productDescription').value,image_url:$('productImageUrl').value.trim(),active:$('productActive').checked,is_new:$('productNew').checked});
+  function message(id, text, error=false) { $(id).textContent=text; $(id).classList.toggle('error',error); }
+  function preview() {
+    const v=values(); const file=$('productImageFile').files[0];
+    if(previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl=''; }
+    if(file && ['image/jpeg','image/png','image/webp'].includes(file.type) && file.size<=5242880) previewUrl=URL.createObjectURL(file);
+    $('previewImage').src=previewUrl || imageUrl(v.image_url) || placeholder;
+    $('previewName').textContent=v.name || 'Your product name';
+    $('previewCategory').textContent=v.category || 'Category';
+    $('previewPrice').textContent=money(v.price);
+    $('previewDescription').textContent=v.description;
+    $('previewVisibility').textContent=v.active?'Published':'Hidden';
+  }
+  function closeEditor() {
+    if(saving) return;
+    $('productEditor').close();
+    if(previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl=''; opener?.focus();
+  }
+  function openEditor(id=null) {
+    const product=id===null?null:products.find(p=>String(p.id)===String(id));
+    if(id!==null&&!product)return;
+    opener=document.activeElement;editingId=product?.id??null;uploaded=null;
+    $('productForm').reset();
+    $('productEditorTitle').textContent=product?'Edit product':'Add product';
+    $('productName').value=product?.name??'';
+    $('productCategory').value=product?.category??'';
+    $('productPrice').value=product?.price??'';
+    $('productOldPrice').value=product?.old_price??'';
+    $('productDescription').value=product?.description??'';
+    $('productImageUrl').value=product?.image_url??'';
+    $('productActive').checked=product?.active??false;
+    $('productNew').checked=product?.is_new??false;
+    message('productEditorMessage','');preview();$('productEditor').showModal();$('productName').focus();
+  }
+  window.renderProducts = function() {
+    const query=$('catalogSearch').value.trim().toLowerCase();const visibility=$('catalogVisibility').value;
+    const list=products.filter(p=>(visibility==='all'||(visibility==='published'?p.active:!p.active))&&`${p.name} ${p.category}`.toLowerCase().includes(query));
+    $('catalogCount').textContent=`${list.length} of ${products.length} products · ${products.filter(p=>p.active).length} published`;
+    $('productsBody').innerHTML=list.length?list.map(p=>`<article class="catalog-card"><img src="${escape(imageUrl(p.image_url)||placeholder)}" alt="${escape(p.name)}" loading="lazy"><div class="catalog-card-copy"><span class="muted">${escape(p.category)}</span><h3>${escape(p.name)}</h3><p>${escape(p.description||'No description yet.')}</p><strong>${money(p.price)}</strong><div class="catalog-card-foot"><span class="status ${p.active?'Confirmed':''}">${p.active?'Published':'Hidden'}</span><button class="btn alt" type="button" data-edit="${escape(p.id)}">Edit</button></div></div></article>`).join(''):'<p class="empty">No products match. Add a product or adjust your filters.</p>';
+    $('productsBody').querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{img.src=placeholder;},{once:true}));
+  };
+  async function refreshProducts() {
+    const {data,error}=await db.from('products').select('*').order('id');
+    if(error)throw error;products=data||[];renderProducts();
+  }
+  async function save(event) {
+    event.preventDefault();if(saving)return;
+    let payload;const file=$('productImageFile').files[0];
+    try {payload=validate(values(),file);} catch(error){message('productEditorMessage',error.message,true);return;}
+    saving=true;
+    const controls=[...$('productForm').querySelectorAll('input,textarea,button')];controls.forEach(c=>c.disabled=true);
+    message('productEditorMessage',file?'Uploading image and saving product…':'Saving product…');
+    try {
+      if(!await isCurrentUserAdmin())throw new Error('Your admin session has expired. Please sign in again.');
+      if(file) {
+        if(uploaded?.file!==file) {
+          const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[file.type];
+          const path=`thumbnails/${crypto.randomUUID()}.${ext}`;
+          const {error}=await db.storage.from('product-images').upload(path,file,{contentType:file.type,upsert:false});
+          if(error)throw error;
+          const {data}=db.storage.from('product-images').getPublicUrl(path);
+          uploaded={file,url:data.publicUrl};
+        }
+        payload.image_url=uploaded.url;
+      }
+      const query=editingId===null?db.from('products').insert(payload):db.from('products').update(payload).eq('id',editingId);
+      const {data,error}=await query.select().single();
+      if(error)throw error;
+      if(!data)throw new Error('Product was not saved. Check your admin access.');
+      const index=products.findIndex(p=>String(p.id)===String(data.id));
+      if(index<0)products.push(data);else products[index]=data;
+      renderProducts();saving=false;closeEditor();
+      message('catalogMessage',`${data.name} saved. ${data.active?'Published on the storefront.':'Hidden from the storefront.'}`);
+    } catch(error) {message('productEditorMessage',error.message||'Could not save. Your edits are still here; please retry.',true);}
+    finally {saving=false;controls.forEach(c=>c.disabled=false);}
+  }
+  $('addProductBtn').addEventListener('click',()=>openEditor());
+  $('productsBody').addEventListener('click',e=>{const button=e.target.closest('[data-edit]');if(button)openEditor(button.dataset.edit);});
+  $('catalogSearch').addEventListener('input',renderProducts);
+  $('catalogVisibility').addEventListener('change',renderProducts);
+  $('refreshProducts').addEventListener('click',async()=>{try{await refreshProducts();message('catalogMessage','Products refreshed.');}catch(e){message('catalogMessage',e.message,true);}});
+  $('productForm').addEventListener('submit',save);
+  $('productForm').addEventListener('input',preview);
+  $('productImageFile').addEventListener('change',preview);
+  $('previewImage').addEventListener('error',()=>{if(!$('previewImage').src.endsWith(placeholder))$('previewImage').src=placeholder;});
+  ['closeProductEditor','cancelProductEdit'].forEach(id=>$(id).addEventListener('click',closeEditor));
+  $('productEditor').addEventListener('cancel',e=>{e.preventDefault();closeEditor();});
+})();
