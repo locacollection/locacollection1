@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LOCA COLLECTION / Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/admin-base.css">
 <link rel="stylesheet" href="css/admin.css">
 <link rel="stylesheet" href="css/catalog.css">
@@ -11,64 +14,61 @@
 <body>
 <div class="login" id="login">
   <div class="loginbox">
-    <div class="login-mark"><span>LOCA</span><small>COLLECTION / STUDIO</small></div>
+    <div class="login-mark"><b>LOCA</b><span>COLLECTION / STUDIO</span></div>
     <p class="kicker">Private workspace</p>
     <h1>Run the edit.</h1>
-    <p class="muted login-copy">Orders, customers and the live Pakistani fashion catalogue, in one calm place.</p>
+    <p class="muted login-copy">Orders, customers and the live Pakistani fashion catalogue, in one focused desk.</p>
     <form id="loginForm">
-      <div class="field"><label for="adminEmail">Admin email</label><input id="adminEmail" type="email" placeholder="Enter admin email" autocomplete="username" required></div>
-      <div class="field"><label for="adminPass">Password</label><input id="adminPass" type="password" placeholder="Enter password" autocomplete="current-password" required></div>
-      <button class="btn" style="width:100%" type="submit">Enter studio <span>↗</span></button>
-      <div class="error" id="loginError"></div>
+      <div class="field"><label for="adminEmail">Admin email</label><input id="adminEmail" type="email" autocomplete="username" placeholder="Enter admin email" required></div>
+      <div class="field"><label for="adminPass">Password</label><input id="adminPass" type="password" autocomplete="current-password" placeholder="Enter password" required></div>
+      <button class="btn btn-primary login-submit" type="submit"><span aria-hidden="true">↗</span> Enter studio</button>
+      <div class="error" id="loginError" role="alert"></div>
     </form>
-    <div class="login-note"><span class="live-dot"></span> Storefront sync is powered by Supabase</div>
+    <p class="login-note"><i class="live-dot"></i> Supabase catalogue sync is ready</p>
   </div>
 </div>
 
 <div class="app" id="app">
-  <header class="top"><div class="topin">
-    <a class="studio-brand" href="admin.html"><span>LOCA</span><small>COLLECTION / STUDIO</small></a>
-    <div class="topright"><span class="sync-status"><i></i> Live catalogue</span><a href="index.html" target="_blank">View store ↗</a><button class="btn alt" id="logoutBtn">Log out</button></div>
-  </div></header>
-  <div class="shell">
-    <aside class="sidebar">
-      <div class="sidebar-intro"><p class="kicker">Workspace</p><h2>Atelier desk</h2><p>Make the next drop feel considered.</p></div>
-      <nav class="side-nav" aria-label="Studio sections">
-        <button class="tab active" data-tab="orders"><span class="nav-icon">↗</span><span>Orders</span><b id="sideOrderCount">0</b></button>
-        <button class="tab" data-tab="customers"><span class="nav-icon">◌</span><span>Customers</span><b id="sideCustomerCount">0</b></button>
-        <button class="tab" data-tab="products"><span class="nav-icon">▦</span><span>Catalogue</span><b id="sideProductCount">0</b></button>
-      </nav>
-      <div class="sidebar-foot"><span class="live-dot"></span><div><strong>Storefront connected</strong><small>Only published products appear online.</small></div></div>
-    </aside>
-    <main class="main"><div class="wrap">
-      <div class="head"><div><p class="kicker">LOCA / 2026 EDIT</p><h1 id="pageTitle">Good evening, let’s ship beautifully.</h1><p class="head-copy">A sharper view of what customers are buying and what the store is showing.</p></div><div class="head-date" id="headDate"></div></div>
-      <div class="stats" id="stats"></div>
+<header class="top"><div class="topin">
+  <a class="studio-brand" href="admin.html"><b>LOCA</b><span>COLLECTION / STUDIO</span></a>
+  <div class="topright"><span class="sync-status"><i class="live-dot"></i><span id="topSyncLabel">Live catalogue</span></span><a class="store-link" href="index.html" target="_blank"><span aria-hidden="true">↗</span> View store</a><button class="btn alt" id="logoutBtn"><span aria-hidden="true">↪</span> Log out</button></div>
+</div></header>
+<div class="shell">
+<aside class="sidebar">
+  <div class="sidebar-intro"><p class="kicker">Workspace</p><h2>Atelier desk</h2><p>Keep the next drop clear, useful and unmistakably LOCA.</p></div>
+  <nav class="side-nav" aria-label="Studio sections">
+    <button class="tab active" data-tab="orders"><span class="nav-icon" aria-hidden="true">⌁</span><span>Orders</span><b id="sideOrderCount">0</b></button>
+    <button class="tab" data-tab="customers"><span class="nav-icon" aria-hidden="true">◎</span><span>Customers</span><b id="sideCustomerCount">0</b></button>
+    <button class="tab" data-tab="products"><span class="nav-icon" aria-hidden="true">▦</span><span>Catalogue</span><b id="sideProductCount">0</b></button>
+  </nav>
+  <div class="sidebar-foot"><i class="live-dot"></i><div><strong>Storefront connected</strong><small>Only active database products appear online.</small></div></div>
+</aside>
+<main class="main"><div class="wrap">
+  <div class="head"><div><p class="kicker">LOCA / 2026 EDIT</p><h1 id="pageTitle">Orders at a glance.</h1><p class="head-copy">A clean operating view for the store, from first click to doorstep.</p></div><time class="head-date" id="headDate"></time></div>
+  <div class="stats" id="stats"></div>
 
-      <section class="panel" id="ordersSection">
-        <div class="section-head"><div><p class="kicker">Fulfilment</p><h2>Orders</h2><div class="muted" id="orderCount"></div></div><div class="toolbar-actions"><input id="search" placeholder="Search order, name, phone..." autocomplete="off"><select id="filter"><option value="All">All statuses</option><option>Pending</option><option>Confirmed</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></div></div>
-        <div class="order-list-head"><span>Order</span><span>Customer</span><span>Items</span><span>Total</span><span>Payment</span><span>Status</span><span></span></div>
-        <div class="tablewrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Action</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
-      </section>
+  <section class="panel" id="ordersSection">
+    <div class="section-head"><div><p class="kicker">Fulfilment</p><h2>Orders</h2><p class="muted" id="orderCount"></p></div><div class="toolbar-actions"><label class="search-control"><span aria-hidden="true">⌕</span><input id="search" placeholder="Search order, name, phone" autocomplete="off"></label><select id="filter" aria-label="Filter orders"><option value="All">All statuses</option><option>Pending</option><option>Confirmed</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></div></div>
+    <div class="tablewrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Action</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+  </section>
 
-      <section class="panel" id="customersSection" style="display:none">
-        <div class="section-head"><div><p class="kicker">People</p><h2>Customer book</h2><div class="muted" id="customerCount">One profile per email address.</div></div><div class="toolbar-actions"><input id="customerSearch" placeholder="Search name, email, city..." autocomplete="off"></div></div>
-        <div class="insight-strip"><div><strong>One account, one profile</strong><span>Registered customers are deduplicated by email.</span></div><div><strong>Order history stays attached</strong><span>Guest checkout records remain visible without creating duplicate accounts.</span></div></div>
-        <div class="tablewrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Email</th><th>City</th><th>Orders</th><th>Total spent</th><th>Profile</th></tr></thead><tbody id="customersBody"></tbody></table></div>
-      </section>
+  <section class="panel" id="customersSection" style="display:none">
+    <div class="section-head"><div><p class="kicker">People</p><h2>Customer book</h2><p class="muted" id="customerCount">Registered accounts and order history stay separate.</p></div><div class="toolbar-actions"><label class="search-control"><span aria-hidden="true">⌕</span><input id="customerSearch" placeholder="Search name, email, city" autocomplete="off"></label></div></div>
+    <div class="insight-strip"><div><b><span aria-hidden="true">◎</span> One account per email</b><span>Registered profiles are deduplicated by email, never copied per order.</span></div><div><b><span aria-hidden="true">⌁</span> Guest history stays visible</b><span>Past order records remain attached without creating another account.</span></div></div>
+    <div class="tablewrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Email</th><th>City</th><th>Orders</th><th>Total spent</th><th>Profile</th></tr></thead><tbody id="customersBody"></tbody></table></div>
+  </section>
 
-      <section class="panel" id="productsSection" style="display:none">
-        <div class="section-head"><div><p class="kicker">Merchandising</p><h2>Live catalogue</h2><div class="muted" id="catalogCount">Only database products are shown here, matching the storefront.</div></div><button class="btn" id="addProductBtn" type="button">+ Add product</button></div>
-        <div class="catalog-filters"><label>Search products<input id="catalogSearch" type="search" placeholder="Search by name or category"></label><label>Category<select id="catalogCategory"><option value="all">All categories</option><option value="Women">Women</option><option value="Women - Pret & Kurtas">Women: Pret & Kurtas</option><option value="Women - 3-Piece & Unstitched">Women: 3-Piece & Unstitched</option><option value="Women - Formal & Festive">Women: Formal & Festive</option><option value="Men">Men</option><option value="Men - Kurta & Shalwar Kameez">Men: Kurta & Shalwar Kameez</option><option value="Men - Waistcoats & Formal">Men: Waistcoats & Formal</option><option value="Footwear">Footwear</option><option value="Accessories">Accessories</option><option value="Fragrance">Fragrance</option><option value="Kids">Kids</option></select></label><label>Visibility<select id="catalogVisibility"><option value="all">All products</option><option value="published">Published</option><option value="hidden">Hidden</option></select></label><button class="btn alt" id="refreshProducts" type="button">Refresh ↻</button></div>
-        <p id="catalogMessage" role="status" aria-live="polite"></p><div id="productsBody" class="catalog-grid"></div>
-      </section>
-    </div></main>
-  </div>
-</div>
+  <section class="panel" id="productsSection" style="display:none">
+    <div class="section-head"><div><p class="kicker">Merchandising</p><h2>Live catalogue</h2><p class="muted" id="catalogCount">Loading database products...</p></div><button class="btn btn-primary" id="addProductBtn" type="button"><span aria-hidden="true">＋</span> Add product</button></div>
+    <div class="catalog-toolbar"><div class="catalog-filters"><label>Search products<input id="catalogSearch" type="search" placeholder="Product or category"></label><label>Category<select id="catalogCategory"><option value="all">All categories</option><option value="Women">Women</option><option value="Women - Pret & Kurtas">Women: Pret & Kurtas</option><option value="Women - 3-Piece & Unstitched">Women: 3-Piece & Unstitched</option><option value="Women - Formal & Festive">Women: Formal & Festive</option><option value="Men">Men</option><option value="Men - Kurta & Shalwar Kameez">Men: Kurta & Shalwar Kameez</option><option value="Men - Waistcoats & Formal">Men: Waistcoats & Formal</option><option value="Footwear">Footwear</option><option value="Accessories">Accessories</option><option value="Fragrance">Fragrance</option><option value="Kids">Kids</option></select></label><label>Visibility<select id="catalogVisibility"><option value="all">All products</option><option value="published">Published</option><option value="hidden">Hidden</option></select></label></div><button class="btn alt sync-button" id="syncProducts" type="button"><span aria-hidden="true">↻</span> <span id="syncProductsLabel">Sync catalogue</span></button></div>
+    <p id="catalogMessage" role="status" aria-live="polite"></p><div id="productsBody" class="catalog-grid"></div>
+  </section>
+</div></main>
+</div></div>
 
 <aside class="profile-drawer" id="customerProfileDrawer" aria-label="Customer profile" aria-hidden="true"><div class="profile-drawer-head"><div><p class="kicker">Customer profile</p><h2 id="profileDrawerTitle">Customer</h2><p id="profileDrawerEmail" class="muted"></p></div><button class="icon-close" id="closeProfileDrawer" type="button" aria-label="Close profile">×</button></div><div id="profileDrawerBody"></div></aside><div class="drawer-backdrop" id="profileDrawerBackdrop"></div>
-
 <div class="modal" id="modal"><div class="modalbox"><div class="modalhead"><div><p class="kicker">Order detail</p><h2 id="modalTitle">Order</h2></div><button class="icon-close" id="closeModal" type="button" aria-label="Close order">×</button></div><div id="modalBody"></div></div></div>
 
-<dialog id="productEditor" class="product-editor" aria-labelledby="productEditorTitle"><form id="productForm"><div class="editor-heading"><div><span class="muted">Catalogue editor</span><h2 id="productEditorTitle">Add product</h2></div><button type="button" class="btn alt" id="closeProductEditor">Close</button></div><div class="editor-layout"><div class="editor-fields"><div class="field"><label for="productName">Product name</label><input id="productName" required maxlength="160" placeholder="e.g. Noor Cotton Kurta"></div><div class="field"><label for="productCategory">Category</label><input id="productCategory" required maxlength="80" list="productCategories" placeholder="Choose or type a category"><datalist id="productCategories"><option value="Women"><option value="Women - Pret & Kurtas"><option value="Women - 3-Piece & Unstitched"><option value="Women - Formal & Festive"><option value="Men"><option value="Men - Kurta & Shalwar Kameez"><option value="Men - Waistcoats & Formal"><option value="Footwear"><option value="Accessories"><option value="Fragrance"><option value="Kids"></datalist></div><div class="price-fields"><div class="field"><label for="productPrice">Price (PKR)</label><input id="productPrice" type="number" min="0" max="2147483647" step="1" required></div><div class="field"><label for="productOldPrice">Original price</label><input id="productOldPrice" type="number" min="0" max="2147483647" step="1"></div></div><div class="field"><label for="productDescription">Description</label><textarea id="productDescription" rows="5" maxlength="5000" placeholder="Fabric, fit, care or styling notes."></textarea></div><div class="field"><label for="productImageFile">Upload thumbnail</label><input id="productImageFile" type="file" accept="image/jpeg,image/png,image/webp"><small class="muted">JPG, PNG or WebP, up to 5 MB.</small></div><div class="field"><label for="productImageUrl">Or use an image link</label><input id="productImageUrl" type="url" placeholder="https://..."></div><div class="editor-checks"><label><input id="productActive" type="checkbox"> Publish on storefront</label><label><input id="productNew" type="checkbox"> Show in New arrivals</label></div></div><aside class="editor-preview"><span class="muted">Listing preview</span><img id="previewImage" src="assets/product-placeholder.svg" alt="Product thumbnail preview"><span id="previewCategory"></span><h3 id="previewName">Your product name</h3><strong id="previewPrice">PKR 0</strong><p id="previewDescription"></p><span id="previewVisibility" class="status">Hidden</span></aside></div><p id="productEditorMessage" role="status" aria-live="polite"></p><div class="editor-actions"><button type="button" class="btn danger" id="deleteProductBtn" style="margin-right:auto;display:none">Delete product</button><button type="button" class="btn alt" id="cancelProductEdit">Cancel</button><button type="submit" class="btn" id="saveProductBtn">Save product</button></div></form></dialog>
+<dialog id="productEditor" class="product-editor" aria-labelledby="productEditorTitle"><form id="productForm"><div class="editor-heading"><div><span class="muted">Catalogue editor</span><h2 id="productEditorTitle">Add product</h2></div><button type="button" class="btn alt" id="closeProductEditor">Close</button></div><div class="editor-layout"><div class="editor-fields"><div class="field"><label for="productName">Product name</label><input id="productName" required maxlength="160" placeholder="e.g. Noor Cotton Kurta"></div><div class="field"><label for="productCategory">Category</label><input id="productCategory" required maxlength="80" list="productCategories" placeholder="Choose or type a category"><datalist id="productCategories"><option value="Women"><option value="Women - Pret & Kurtas"><option value="Women - 3-Piece & Unstitched"><option value="Women - Formal & Festive"><option value="Men"><option value="Men - Kurta & Shalwar Kameez"><option value="Men - Waistcoats & Formal"><option value="Footwear"><option value="Accessories"><option value="Fragrance"><option value="Kids"></datalist></div><div class="price-fields"><div class="field"><label for="productPrice">Price (PKR)</label><input id="productPrice" type="number" min="0" max="2147483647" step="1" required></div><div class="field"><label for="productOldPrice">Original price</label><input id="productOldPrice" type="number" min="0" max="2147483647" step="1"></div></div><div class="field"><label for="productDescription">Description</label><textarea id="productDescription" rows="5" maxlength="5000" placeholder="Fabric, fit, care or styling notes."></textarea></div><div class="field"><label for="productImageFile">Upload thumbnail</label><input id="productImageFile" type="file" accept="image/jpeg,image/png,image/webp"><small class="muted">JPG, PNG or WebP, up to 5 MB.</small></div><div class="field"><label for="productImageUrl">Or use an image link</label><input id="productImageUrl" type="url" placeholder="https://..."></div><div class="editor-checks"><label><input id="productActive" type="checkbox"> Publish on storefront</label><label><input id="productNew" type="checkbox"> Show in New arrivals</label></div></div><aside class="editor-preview"><span class="muted">Listing preview</span><img id="previewImage" src="assets/product-placeholder.svg" alt="Product thumbnail preview"><span id="previewCategory"></span><h3 id="previewName">Your product name</h3><strong id="previewPrice">PKR 0</strong><p id="previewDescription"></p><span id="previewVisibility" class="status">Hidden</span></aside></div><p id="productEditorMessage" role="status" aria-live="polite"></p><div class="editor-actions"><button type="button" class="btn danger" id="deleteProductBtn" style="margin-right:auto;display:none">Delete product</button><button type="button" class="btn alt" id="cancelProductEdit">Cancel</button><button type="submit" class="btn btn-primary" id="saveProductBtn">Save product</button></div></form></dialog>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/config.js"></script><script src="js/categories.js"></script><script src="js/admin/core.js"></script><script src="js/admin/catalog.js"></script>
 </body></html>
