@@ -295,3 +295,29 @@ tbody tr{transition:background .2s}tbody tr:hover{background:#fbf5ed!important}
 .address-load-error{border-color:rgba(154,63,57,.2)!important;background:#fff4f1!important;color:#8b3d38}
 .toolbar-actions select{min-width:150px}
 @media(max-width:720px){.toolbar-actions select{min-width:0;flex:1}.profile-address-head{align-items:flex-start}}
+
+
+/* Customer-originated order actions */
+.order-return-requested{background:#f4e8d5;color:#815d29}
+.payment-refund-pending{border-color:#d9c2df;background:#faf4fc;color:#704b79}
+.customer-action-flag{padding-left:8px;border-left:2px solid var(--l-gold);color:#775d37!important}
+.workflow-customer-action{grid-column:1/-1;padding:13px 15px!important;border:1px solid rgba(189,152,99,.22)!important;border-radius:13px;background:linear-gradient(135deg,#fbf4e9,#f5e8d6)!important}
+.workflow-customer-action small,.workflow-customer-action strong,.workflow-customer-action span{display:block}
+.workflow-customer-action strong{margin:4px 0 2px;color:var(--l-wine);font-size:13px}
+.workflow-customer-action span{color:#74695f;font-size:10px}
+.workflow-customer-action p{margin:7px 0 0;padding-top:7px;border-top:1px dashed rgba(81,66,50,.16);color:#5f554c;font-size:10px;line-height:1.55}
+.customer-action-timeline{margin:20px 0;padding:20px;border:1px solid rgba(189,152,99,.2);border-radius:17px;background:#fbf5ec}
+.customer-action-timeline>.kicker{margin-bottom:12px}
+.customer-action-entry{display:grid;grid-template-columns:minmax(145px,.8fr) minmax(0,1.2fr);gap:18px;padding:13px 0;border-top:1px solid rgba(39,31,24,.1)}
+.customer-action-entry:first-of-type{border-top:0}
+.customer-action-entry strong,.customer-action-entry span,.customer-action-entry b{display:block}
+.customer-action-entry strong{font-size:12px}
+.customer-action-entry span{margin-top:3px;color:#8a7f74;font-size:9px}
+.customer-action-entry>div:last-child{text-align:right}
+.customer-action-entry b{color:#704c29;font-size:10px}
+.customer-action-entry p{margin:4px 0 0;color:#6d6258;font-size:10px;line-height:1.55}
+.user-order-action-note{margin-top:5px;color:#7c5930;font-size:8px;font-weight:700;line-height:1.4}
+@media(max-width:620px){
+  .customer-action-entry{grid-template-columns:1fr;gap:6px}
+  .customer-action-entry>div:last-child{text-align:left}
+}
