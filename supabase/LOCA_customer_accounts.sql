@@ -527,7 +527,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $
+as $$
 declare
   v_user_id uuid := auth.uid();
   v_order public.orders%rowtype;
@@ -660,7 +660,7 @@ begin
     'status_updated_at', v_order.status_updated_at
   );
 end;
-$;
+$$;
 
 revoke all on function public.customer_manage_order(uuid, text, text, text) from public;
 revoke all on function public.customer_manage_order(uuid, text, text, text) from anon;
