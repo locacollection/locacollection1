@@ -286,3 +286,12 @@ tbody tr{transition:background .2s}tbody tr:hover{background:#fbf5ed!important}
   .workflow-actions .btn{flex:1}
   .order-detail-workflow{grid-template-columns:1fr 1fr}.order-detail-workflow .workflow-button{grid-column:1/-1}
 }
+
+
+/* Synced customer address book */
+.profile-address{margin-bottom:9px;line-height:1.65;box-shadow:0 7px 22px rgba(39,31,24,.035)}
+.profile-address-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px}
+.profile-address-head .status{margin:0!important}
+.address-load-error{border-color:rgba(154,63,57,.2)!important;background:#fff4f1!important;color:#8b3d38}
+.toolbar-actions select{min-width:150px}
+@media(max-width:720px){.toolbar-actions select{min-width:0;flex:1}.profile-address-head{align-items:flex-start}}
