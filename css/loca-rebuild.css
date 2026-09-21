@@ -37,3 +37,158 @@ footer{padding:60px clamp(18px,4vw,64px) 25px;background:var(--ink);color:#fff}.
 .site-notice-close:hover{background:#eadbc9;transform:rotate(6deg)}
 @media(max-width:560px){.site-notice-layer{align-items:end;padding:12px}.site-notice-window{padding:32px 25px 26px;border-radius:23px}.site-notice-window:before{border-radius:17px}.site-notice-window h2{font-size:34px}}
 @media(prefers-reduced-motion:reduce){.site-notice-layer,.site-notice-window,.site-notice-action,.site-notice-close{transition-duration:.01ms!important}}
+
+
+/* Luxury member account — tabbed profile, orders, address book and contact details */
+::selection{background:rgba(167,123,50,.22);color:var(--ink)}
+:where(button,a,input,select,textarea):focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.account-card{width:min(1180px,100%);padding:0;overflow:auto;background:linear-gradient(145deg,#fffdf8 0%,#f6f0e7 100%);border-color:rgba(255,255,255,.82);box-shadow:0 38px 130px rgba(15,12,9,.28)}
+.account-modal-head{position:relative;padding:34px 40px 28px;background:rgba(255,253,248,.9);border-bottom:1px solid rgba(44,35,25,.09);backdrop-filter:blur(18px)}
+.account-modal-head:after{content:"";position:absolute;left:40px;bottom:-1px;width:74px;height:1px;background:var(--gold)}
+.account-modal-head h2{font:500 clamp(34px,4.3vw,54px)/1 var(--serif)}
+.account-modal-head .close-button{position:absolute;right:34px;top:34px}
+.account-shell{display:grid;grid-template-columns:310px minmax(0,1fr);min-height:610px;margin:0}
+.account-sidebar{position:relative;display:flex;flex-direction:column;padding:30px 22px 24px;overflow:hidden;background:linear-gradient(155deg,#201d19 0%,#12110f 72%);color:#fff}
+.account-sidebar:before{content:"";position:absolute;width:280px;height:280px;right:-150px;top:-135px;border:1px solid rgba(215,189,137,.2);border-radius:50%;box-shadow:0 0 0 38px rgba(215,189,137,.025),0 0 0 76px rgba(215,189,137,.018);pointer-events:none}
+.account-member-card{position:relative;display:grid;grid-template-columns:54px minmax(0,1fr);gap:14px;align-items:center;padding:8px 8px 25px;border-bottom:1px solid rgba(255,255,255,.11)}
+.account-avatar{display:grid;place-items:center;width:54px;height:54px;border:1px solid rgba(231,210,170,.38);border-radius:50%;background:linear-gradient(145deg,#a77b32,#6f4a1c);box-shadow:0 12px 28px rgba(0,0,0,.3);font:600 23px/1 var(--serif);color:#fff8e9}
+.account-member-card small,.account-member-card strong,.account-member-card span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.account-member-card small{margin-bottom:4px;color:#c9b487;font-size:8px;font-weight:700;letter-spacing:.17em;text-transform:uppercase}
+.account-member-card strong{font:500 18px/1.25 var(--serif)}
+.account-member-card span{margin-top:4px;color:#918d86;font-size:10px}
+.account-nav{position:relative;display:grid;gap:6px;margin-top:22px}
+.account-tab{width:100%;display:grid;grid-template-columns:35px minmax(0,1fr);gap:10px;align-items:center;padding:13px 12px;border:1px solid transparent;border-radius:15px;background:transparent;color:#8f8b84;text-align:left;transition:background .28s var(--ease),border-color .28s,color .28s,transform .28s var(--ease)}
+.account-tab svg{width:19px;height:19px;margin-left:3px}
+.account-tab span,.account-tab b,.account-tab small{display:block}
+.account-tab b{color:#ded8cd;font-size:12px;letter-spacing:.01em}
+.account-tab small{margin-top:3px;color:#77736d;font-size:9px;font-weight:400}
+.account-tab:hover{transform:translateX(4px);background:rgba(255,255,255,.055);color:#d7bd89}
+.account-tab.active{border-color:rgba(215,189,137,.2);background:linear-gradient(110deg,rgba(167,123,50,.24),rgba(167,123,50,.07));color:#e4c993;box-shadow:inset 3px 0 0 #c79a4a}
+.account-tab.active b{color:#fff}
+.account-signout{position:relative;width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding:15px 12px 8px;border:0;border-top:1px solid rgba(255,255,255,.11);background:transparent;color:#aaa59c;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;transition:color .2s}
+.account-signout:hover{color:#f0d8aa}
+.account-content{min-width:0;padding:36px clamp(28px,4vw,54px) 46px;background:radial-gradient(circle at 100% 0,rgba(215,189,137,.13),transparent 34%),#fffdf8}
+.account-section{animation:accountSectionIn .5s var(--ease) both}
+.account-section-head{display:flex;justify-content:space-between;align-items:start;gap:25px;padding-bottom:24px;margin-bottom:25px;border-bottom:1px solid var(--line)}
+.account-section-head h3{margin:0;font:500 clamp(30px,3.4vw,42px)/1.05 var(--serif);letter-spacing:-.035em}
+.account-section-head p:not(.eyebrow){max-width:510px;margin:10px 0 0;color:var(--muted);font-size:12px;line-height:1.65}
+.account-section-head .eyebrow{margin-bottom:10px}
+.account-section-number{color:rgba(167,123,50,.28);font:500 42px/1 var(--serif)}
+.account-form{max-width:660px}
+.account-form label,.address-editor label{gap:8px}
+.account-form input,.address-editor input,.address-editor textarea{min-height:50px;background:rgba(255,255,255,.84);border-color:rgba(34,29,23,.12);box-shadow:0 4px 18px rgba(35,27,19,.025)}
+.account-form textarea,.address-editor textarea{min-height:96px;resize:vertical}
+.account-form input:hover,.address-editor input:hover,.address-editor textarea:hover{border-color:rgba(167,123,50,.38)}
+.account-note{display:grid;grid-template-columns:28px minmax(0,1fr);gap:11px;align-items:start;margin:7px 0;padding:14px 16px;border:1px solid rgba(167,123,50,.16);border-radius:15px;background:rgba(231,216,184,.17);color:#786b59}
+.account-note svg{width:18px;height:18px;margin-top:2px;color:var(--gold)}
+.account-note p{margin:0;font-size:11px;line-height:1.6}
+.account-save{justify-self:start;min-width:170px}
+.account-message{max-width:660px;margin:15px 0 0;padding:12px 14px;border-radius:12px;background:rgba(47,108,82,.08);font-size:11px;font-weight:600}
+.order-filter-tabs{display:flex;gap:7px;overflow:auto;padding:2px 1px 18px;scrollbar-width:none}
+.order-filter-tabs::-webkit-scrollbar{display:none}
+.order-filter-tabs button{flex:none;padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-size:10px;font-weight:700;transition:.22s var(--ease)}
+.order-filter-tabs button:hover,.order-filter-tabs button.active{border-color:var(--ink);background:var(--ink);color:#fff;transform:translateY(-1px)}
+.my-orders-list{display:grid;gap:12px}
+.account-order-card{position:relative;padding:20px;border:1px solid rgba(36,29,21,.1);border-radius:19px;background:rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(34,27,19,.045);overflow:hidden;transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.account-order-card:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(var(--gold-soft),var(--gold))}
+.account-order-card:hover{transform:translateY(-3px);border-color:rgba(167,123,50,.24);box-shadow:0 17px 42px rgba(34,27,19,.09)}
+.account-order-head{display:flex;justify-content:space-between;gap:18px}
+.account-order-head>div:last-child{text-align:right}
+.account-order-head small,.account-order-head strong,.account-order-head b{display:block}
+.account-order-head small{color:var(--muted);font-size:9px;letter-spacing:.045em}
+.account-order-head strong{margin-top:3px;font-size:13px}
+.account-order-head b{font:600 17px/1.2 var(--serif)}
+.account-order-status{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}
+.account-status{display:inline-flex;align-items:center;min-height:27px;padding:5px 10px;border:1px solid transparent;border-radius:999px;background:#ece9e1;color:#5e584f;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.account-status:before{content:"";width:5px;height:5px;margin-right:6px;border-radius:50%;background:currentColor}
+.account-status.order-confirmed,.account-status.order-processing,.account-status.order-packed{background:#eee7d8;color:#806229}
+.account-status.order-shipped,.account-status.order-out-for-delivery{background:#e3ebf0;color:#345b73}
+.account-status.order-delivered,.account-status.payment-paid{background:#e1ece4;color:#356447}
+.account-status.order-cancelled,.account-status.payment-failed{background:#f2dfdc;color:#913d3a}
+.account-status.order-returned,.account-status.payment-refunded{background:#ebe3ef;color:#684778}
+.account-status.payment-payment-pending,.account-status.payment-partially-paid{background:#f1e8d8;color:#8a6127}
+.order-progress{padding-top:3px}
+.order-progress-track{height:5px;overflow:hidden;border-radius:99px;background:#e8e2d8}
+.order-progress-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#8d6428,#d1ad69);box-shadow:0 0 12px rgba(167,123,50,.25);transition:width .8s var(--ease)}
+.order-progress>div:last-child{display:flex;justify-content:space-between;margin-top:7px;color:var(--muted);font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.order-exception{display:grid;gap:2px;padding:12px 14px;border-radius:12px;font-size:10px}
+.order-exception b{font-size:10px}
+.order-exception span{color:var(--muted)}
+.order-exception.is-cancelled{background:#f7e8e5;color:#8d3a37}
+.order-exception.is-returned{background:#eee6f2;color:#64436f}
+.account-order-foot{display:flex;justify-content:space-between;gap:15px;margin-top:14px;padding-top:11px;border-top:1px dashed rgba(35,29,22,.12);color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.08em}
+.saved-address-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-bottom:24px}
+.saved-address-card{position:relative;min-width:0;padding:18px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.72);box-shadow:0 7px 24px rgba(35,27,19,.04);transition:.28s var(--ease)}
+.saved-address-card:hover{transform:translateY(-3px);box-shadow:0 15px 34px rgba(35,27,19,.08)}
+.saved-address-card.is-default{border-color:rgba(167,123,50,.4);background:linear-gradient(145deg,#fffdf8,#f7efdf)}
+.saved-address-card>strong{display:block;margin:14px 0 4px;font:600 17px/1.3 var(--serif)}
+.saved-address-card>p{min-height:40px;margin:0 0 7px;color:#5f584f;font-size:11px;line-height:1.65}
+.saved-address-card>small{color:var(--muted);font-size:9px}
+.saved-address-top{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.saved-address-top>div:first-child{display:flex;gap:7px;align-items:center;min-width:0}
+.saved-address-top span{overflow:hidden;text-overflow:ellipsis;color:var(--gold);font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.saved-address-top b{padding:4px 7px;border-radius:99px;background:var(--ink);color:#fff;font-size:7px;letter-spacing:.09em;text-transform:uppercase}
+.address-card-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.address-card-actions button{border:0;border-bottom:1px solid transparent;background:transparent;padding:0;color:#675f56;font-size:8px;font-weight:700}
+.address-card-actions button:hover{border-color:currentColor;color:var(--gold)}
+.address-card-actions .danger-link:hover{color:#9a3f39}
+.address-editor{display:grid;gap:14px;padding:22px;border:1px solid rgba(36,29,21,.1);border-radius:20px;background:rgba(239,233,223,.42)}
+.address-default-row{justify-content:flex-start}
+.address-default-row input{min-height:auto}
+.address-editor-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:3px}
+.account-empty,.account-loading{display:grid;place-items:start;gap:4px;padding:28px;border:1px dashed rgba(51,42,31,.18);border-radius:17px;background:rgba(244,239,231,.52);color:var(--muted)}
+.account-empty b{color:var(--ink);font:500 19px var(--serif)}
+.account-empty span,.account-loading{font-size:10px;line-height:1.6}
+.account-loading:after{content:"";width:32px;height:2px;margin-top:10px;background:linear-gradient(90deg,var(--gold),transparent);animation:accountLoading 1.1s ease-in-out infinite}
+.site-notice-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:28px}
+.site-notice-actions:has(.site-notice-secondary:not([hidden])){grid-template-columns:1fr 1fr}
+.site-notice-actions .site-notice-action{margin-top:0}
+.site-notice-secondary{min-height:51px;border:1px solid rgba(39,31,24,.14);border-radius:13px;background:#f2e9dc;color:#51483f;font:700 11px/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;transition:transform .24s var(--ease),background .24s}
+.site-notice-secondary:hover{transform:translateY(-2px);background:#e9dac7}
+@keyframes accountSectionIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes accountLoading{50%{width:72px;opacity:.45}}
+@media(max-width:900px){
+  .account-card{max-height:94vh}
+  .account-modal-head{padding:28px 28px 23px}
+  .account-modal-head:after{left:28px}
+  .account-modal-head .close-button{right:24px;top:25px}
+  .account-shell{grid-template-columns:1fr}
+  .account-sidebar{padding:20px 22px}
+  .account-member-card{padding-bottom:17px}
+  .account-nav{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:15px}
+  .account-tab{padding:11px}
+  .account-signout{margin-top:14px}
+  .account-content{padding:30px 28px 38px}
+}
+@media(max-width:560px){
+  .account-card{width:100%;height:min(96vh,900px);max-height:96vh;border-radius:25px 25px 0 0}
+  .account-modal-head{padding:24px 20px 19px}
+  .account-modal-head:after{left:20px}
+  .account-modal-head h2{padding-right:45px;font-size:31px}
+  .account-modal-head .account-identity{display:none}
+  .account-modal-head .close-button{right:16px;top:19px}
+  .account-sidebar{padding:15px 14px 13px}
+  .account-member-card{grid-template-columns:43px minmax(0,1fr);padding:3px 4px 13px}
+  .account-avatar{width:43px;height:43px;font-size:18px}
+  .account-nav{gap:6px}
+  .account-tab{grid-template-columns:24px minmax(0,1fr);gap:7px;padding:10px 8px;border-radius:12px}
+  .account-tab svg{width:16px;height:16px;margin:0}
+  .account-tab b{font-size:10px}
+  .account-tab small{display:none}
+  .account-signout{padding:11px 5px 2px}
+  .account-content{padding:26px 17px 34px}
+  .account-section-head{margin-bottom:20px;padding-bottom:19px}
+  .account-section-head h3{font-size:31px}
+  .account-section-number{display:none}
+  .saved-address-list{grid-template-columns:1fr}
+  .address-editor{padding:16px}
+  .address-editor .two-col{grid-template-columns:1fr}
+  .account-order-head{display:grid;grid-template-columns:1fr auto}
+  .account-order-head>div:last-child{text-align:right}
+  .account-order-card{padding:17px}
+  .account-order-foot{display:grid}
+  .site-notice-actions:has(.site-notice-secondary:not([hidden])){grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .account-section,.account-loading:after{animation:none!important}
+}
