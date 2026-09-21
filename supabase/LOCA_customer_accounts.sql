@@ -293,9 +293,7 @@ grant update (
   payment_status,
   cancelled_by,
   cancellation_reason,
-  cancellation_note,
-  cancelled_at,
-  status_updated_at
+  cancellation_note
 ) on table public.orders to authenticated;
 
 drop policy if exists "Admin update orders" on public.orders;
