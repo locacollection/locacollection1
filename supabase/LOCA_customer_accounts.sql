@@ -100,6 +100,7 @@ create table if not exists public.cart_items (
 );
 
 create index if not exists cart_items_user_id_idx on public.cart_items(user_id);
+create index if not exists cart_items_product_id_idx on public.cart_items(product_id);
 alter table public.cart_items enable row level security;
 
 drop policy if exists cart_select_own on public.cart_items;
@@ -221,6 +222,7 @@ alter table public.orders add constraint orders_cancellation_details_valid
   );
 
 create index if not exists orders_user_id_idx on public.orders(user_id);
+create index if not exists orders_customer_id_idx on public.orders(customer_id);
 create index if not exists orders_status_idx on public.orders(status);
 create index if not exists orders_payment_status_idx on public.orders(payment_status);
 
@@ -305,6 +307,8 @@ using ((select public.is_admin()))
 with check ((select public.is_admin()));
 
 -- Customers see line items only for their own orders.
+create index if not exists order_items_order_id_idx on public.order_items(order_id);
+create index if not exists order_items_product_id_idx on public.order_items(product_id);
 alter table public.order_items enable row level security;
 drop policy if exists "Admin view order items" on public.order_items;
 drop policy if exists customer_read_own_order_items on public.order_items;
