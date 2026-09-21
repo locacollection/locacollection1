@@ -139,11 +139,17 @@ alter table public.orders
   add column if not exists cancellation_reason text,
   add column if not exists cancellation_note text,
   add column if not exists cancelled_at timestamptz,
+  add column if not exists delivered_at timestamptz,
   add column if not exists status_updated_at timestamptz default now();
 
 update public.orders
 set payment_status = coalesce(payment_status, 'Unpaid'),
     status_updated_at = coalesce(status_updated_at, created_at, now());
+
+update public.orders
+set delivered_at = coalesce(delivered_at, status_updated_at, created_at, now())
+where status in ('Delivered', 'Returned')
+  and delivered_at is null;
 
 update public.orders
 set cancelled_by = coalesce(cancelled_by, 'Admin'),
@@ -169,13 +175,13 @@ alter table public.orders drop constraint if exists orders_status_allowed;
 alter table public.orders add constraint orders_status_allowed
   check (status in (
     'Pending', 'Confirmed', 'Processing', 'Packed', 'Shipped',
-    'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'
+    'Out for Delivery', 'Delivered', 'Return Requested', 'Returned', 'Cancelled'
   ));
 
 alter table public.orders drop constraint if exists orders_payment_status_allowed;
 alter table public.orders add constraint orders_payment_status_allowed
   check (payment_status in (
-    'Unpaid', 'Payment Pending', 'Partially Paid', 'Paid', 'Failed', 'Refunded'
+    'Unpaid', 'Payment Pending', 'Partially Paid', 'Paid', 'Refund Pending', 'Failed', 'Refunded'
   ));
 
 alter table public.orders drop constraint if exists orders_cancelled_by_allowed;
@@ -187,6 +193,11 @@ alter table public.orders add constraint orders_cancellation_reason_allowed
   check (
     cancellation_reason is null or cancellation_reason in (
       'Customer requested',
+      'Changed my mind',
+      'Ordered by mistake',
+      'Delivery taking too long',
+      'Payment issue',
+      'Found another option',
       'Unable to contact customer',
       'Payment not received',
       'Duplicate order',
@@ -263,6 +274,11 @@ begin
     new.status_updated_at := now();
   end if;
 
+  if new.status = 'Delivered'
+     and (tg_op = 'INSERT' or old.status is distinct from 'Delivered') then
+    new.delivered_at := coalesce(new.delivered_at, now());
+  end if;
+
   if new.status = 'Cancelled' then
     new.cancelled_at := coalesce(new.cancelled_at, now());
   else
@@ -271,6 +287,7 @@ begin
     new.cancellation_note := null;
     new.cancelled_at := null;
   end if;
+
   return new;
 end;
 $$;
@@ -462,7 +479,195 @@ revoke all on public.delivery_addresses from anon;
 grant select, insert, update, delete on public.delivery_addresses to authenticated;
 grant select, insert, update, delete on public.delivery_addresses to service_role;
 
--- 6) Checkout is available only to authenticated customers.
+-- 6) Customer-owned order actions and audit history.
+create table if not exists public.order_customer_actions (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  action_type text not null,
+  reason text,
+  note text,
+  created_at timestamptz not null default now(),
+  constraint order_customer_actions_type_allowed
+    check (action_type in ('Cancellation', 'Delivery confirmed', 'Return requested')),
+  constraint order_customer_actions_reason_length
+    check (reason is null or char_length(reason) <= 120),
+  constraint order_customer_actions_note_length
+    check (note is null or char_length(note) <= 500)
+);
+
+create index if not exists order_customer_actions_order_created_idx
+  on public.order_customer_actions(order_id, created_at desc);
+create index if not exists order_customer_actions_user_idx
+  on public.order_customer_actions(user_id);
+
+alter table public.order_customer_actions enable row level security;
+
+drop policy if exists order_customer_actions_select_own on public.order_customer_actions;
+create policy order_customer_actions_select_own
+on public.order_customer_actions for select
+to authenticated
+using (
+  user_id = (select auth.uid())
+  or (select public.is_admin())
+);
+
+revoke all on public.order_customer_actions from anon;
+revoke all on public.order_customer_actions from authenticated;
+grant select on public.order_customer_actions to authenticated;
+grant select, insert, update, delete on public.order_customer_actions to service_role;
+
+create or replace function public.customer_manage_order(
+  p_order_id uuid,
+  p_action text,
+  p_reason text default null,
+  p_note text default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $
+declare
+  v_user_id uuid := auth.uid();
+  v_order public.orders%rowtype;
+  v_reason text := nullif(btrim(p_reason), '');
+  v_note text := nullif(btrim(p_note), '');
+  v_action_type text;
+begin
+  if v_user_id is null then
+    raise exception 'Please sign in to manage this order.';
+  end if;
+
+  if p_order_id is null then
+    raise exception 'Choose a valid order.';
+  end if;
+
+  if v_note is not null and char_length(v_note) > 500 then
+    raise exception 'Your note must be 500 characters or fewer.';
+  end if;
+
+  select *
+  into v_order
+  from public.orders
+  where id = p_order_id
+    and user_id = v_user_id
+  for update;
+
+  if not found then
+    raise exception 'This order was not found in your account.';
+  end if;
+
+  case p_action
+    when 'cancel' then
+      if v_order.status not in ('Pending', 'Confirmed', 'Processing') then
+        raise exception 'This order can no longer be cancelled online. Please contact LOCA support.';
+      end if;
+
+      if v_reason is null or v_reason not in (
+        'Changed my mind',
+        'Ordered by mistake',
+        'Delivery taking too long',
+        'Payment issue',
+        'Found another option',
+        'Other'
+      ) then
+        raise exception 'Choose a cancellation reason.';
+      end if;
+
+      update public.orders
+      set status = 'Cancelled',
+          cancelled_by = 'Customer',
+          cancellation_reason = v_reason,
+          cancellation_note = null,
+          payment_status = case
+            when payment_status in ('Paid', 'Partially Paid') then 'Refund Pending'
+            when payment_status = 'Payment Pending' then 'Failed'
+            else payment_status
+          end
+      where id = v_order.id
+      returning * into v_order;
+
+      v_action_type := 'Cancellation';
+
+    when 'confirm_delivery' then
+      if v_order.status <> 'Out for Delivery' then
+        raise exception 'Delivery can only be confirmed while the order is out for delivery.';
+      end if;
+
+      update public.orders
+      set status = 'Delivered'
+      where id = v_order.id
+      returning * into v_order;
+
+      v_action_type := 'Delivery confirmed';
+      v_reason := null;
+      v_note := null;
+
+    when 'request_return' then
+      if v_order.status <> 'Delivered' then
+        raise exception 'A return can only be requested after delivery.';
+      end if;
+
+      if coalesce(v_order.delivered_at, v_order.status_updated_at, v_order.created_at)
+         < now() - interval '7 days' then
+        raise exception 'The seven-day online return request window has closed. Please contact LOCA support.';
+      end if;
+
+      if v_reason is null or v_reason not in (
+        'Size or fit issue',
+        'Item arrived damaged',
+        'Wrong item received',
+        'Product not as expected',
+        'Quality concern',
+        'Other'
+      ) then
+        raise exception 'Choose a return reason.';
+      end if;
+
+      update public.orders
+      set status = 'Return Requested'
+      where id = v_order.id
+      returning * into v_order;
+
+      v_action_type := 'Return requested';
+
+    else
+      raise exception 'This customer order action is not supported.';
+  end case;
+
+  insert into public.order_customer_actions (
+    order_id,
+    user_id,
+    action_type,
+    reason,
+    note
+  )
+  values (
+    v_order.id,
+    v_user_id,
+    v_action_type,
+    v_reason,
+    v_note
+  );
+
+  return jsonb_build_object(
+    'id', v_order.id,
+    'order_number', v_order.order_number,
+    'status', v_order.status,
+    'payment_status', v_order.payment_status,
+    'action', v_action_type,
+    'status_updated_at', v_order.status_updated_at
+  );
+end;
+$;
+
+revoke all on function public.customer_manage_order(uuid, text, text, text) from public;
+revoke all on function public.customer_manage_order(uuid, text, text, text) from anon;
+grant execute on function public.customer_manage_order(uuid, text, text, text) to authenticated;
+
+-- 7) Checkout is available only to authenticated customers.
+
 revoke execute on function public.place_order(text, text, text, text, text, text, jsonb) from anon;
 grant execute on function public.place_order(text, text, text, text, text, text, jsonb) to authenticated;
 
@@ -473,4 +678,5 @@ commit;
 -- B) Signed-in cart and delivery addresses must follow the account across devices.
 -- C) Customer A must never see Customer B's profile, cart, addresses or orders.
 -- D) Admin can edit workflow fields, while normal customers cannot update orders.
--- E) Cancelled orders require a source and reason; other statuses clear cancellation details.
+-- E) Customer cancellation, delivery confirmation and return requests must update both the order and its audit history.
+-- F) Non-owners must never be able to run customer_manage_order for another customer's order.
