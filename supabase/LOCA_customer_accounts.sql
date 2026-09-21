@@ -91,7 +91,7 @@ set email = excluded.email,
 
 -- 2) One cloud cart per account.
 create table if not exists public.cart_items (
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete set null,
   product_id bigint not null references public.products(id) on delete cascade,
   quantity integer not null default 1 check (quantity between 1 and 20),
   created_at timestamptz not null default now(),
