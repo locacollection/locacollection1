@@ -280,6 +280,7 @@ for each row execute procedure public.loca_normalize_order_workflow();
 
 alter table public.orders enable row level security;
 
+drop policy if exists "Admin view orders" on public.orders;
 drop policy if exists customer_read_own_orders on public.orders;
 create policy customer_read_own_orders
 on public.orders for select
@@ -305,6 +306,7 @@ with check ((select public.is_admin()));
 
 -- Customers see line items only for their own orders.
 alter table public.order_items enable row level security;
+drop policy if exists "Admin view order items" on public.order_items;
 drop policy if exists customer_read_own_order_items on public.order_items;
 create policy customer_read_own_order_items
 on public.order_items for select
@@ -323,6 +325,14 @@ alter table public.customers
   add column if not exists user_id uuid references auth.users(id) on delete set null;
 
 create index if not exists customers_user_id_idx on public.customers(user_id);
+
+alter table public.customers enable row level security;
+drop policy if exists "Admin view customers" on public.customers;
+drop policy if exists customer_read_own_customer on public.customers;
+create policy customer_read_own_customer
+on public.customers for select
+to authenticated
+using (user_id = (select auth.uid()) or (select public.is_admin()));
 
 update public.customers c
 set user_id = u.id
