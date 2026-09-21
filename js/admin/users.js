@@ -9,8 +9,24 @@ function renderUsers(){const q=($('usersSearch')?.value||'').trim().toLowerCase(
 
 function openUserProfile(id){const user=rows.find(entry=>String(entry.id)===String(id));if(!user)return;renderCustomers();const key=encodeURIComponent(String(user.email||user.id).trim().toLowerCase());openCustomerProfile(key);}
 
-function openUserOrders(id){const user=rows.find(entry=>String(entry.id)===String(id));if(!user)return;const list=relatedOrders(user),spent=list.filter(order=>!['Cancelled','Returned'].includes(order.status)).reduce((sum,order)=>sum+Number(order.total||0),0);$('userOrdersTitle').textContent=user.full_name||'Registered customer';$('userOrdersEmail').textContent=user.email||'No account email';$('userOrderSummary').innerHTML=`<div><span>Orders linked to this account</span><strong>${list.length} order${list.length===1?'':'s'}</strong></div><div><span>Non-cancelled value</span><strong>${money(spent)}</strong></div>`;$('userOrdersBody').innerHTML=list.length?list.map(order=>`<article class="user-order-row"><div><strong>${esc(order.order_number||order.order_no||order.id)}</strong><small>${new Date(order.created_at).toLocaleString('en-PK')}</small></div><div><div class="workflow-badges">${orderStatusBadge(order.status)}${paymentStatusBadge(order.payment_status)}</div><small>${orderItemCount(order.id)} item${orderItemCount(order.id)===1?'':'s'} · ${esc(order.payment_method||'COD')}${order.status==='Cancelled'&&order.cancellation_reason?' · '+esc(order.cancellation_reason):''}</small></div><div class="order-value">${money(order.total)}</div><div class="row-actions"><button class="smallbtn workflow-button" type="button" data-manage-order="${esc(order.id)}">Manage</button><button class="smallbtn" type="button" data-inspect-order="${esc(order.id)}">Inspect</button></div></article>`).join(''):'<div class="user-orders-empty">This registered user has not placed an order yet.</div>';$('userOrdersModal').dataset.userId=String(user.id);$('userOrdersModal').classList.add('open');$('userOrdersModal').setAttribute('aria-hidden','false');}
-
+function openUserOrders(id){
+  const user=rows.find(entry=>String(entry.id)===String(id));
+  if(!user)return;
+  const list=relatedOrders(user);
+  const spent=list.filter(order=>!['Cancelled','Returned'].includes(order.status)).reduce((sum,order)=>sum+Number(order.total||0),0);
+  $('userOrdersTitle').textContent=user.full_name||'Registered customer';
+  $('userOrdersEmail').textContent=user.email||'No account email';
+  $('userOrderSummary').innerHTML=`<div><span>Orders linked to this account</span><strong>${list.length} order${list.length===1?'':'s'}</strong></div><div><span>Non-cancelled value</span><strong>${money(spent)}</strong></div>`;
+  $('userOrdersBody').innerHTML=list.length?list.map(order=>{
+    const action=typeof latestCustomerAction==='function'?latestCustomerAction(order.id):null;
+    const reason=order.status==='Cancelled'&&order.cancellation_reason?order.cancellation_reason:action?.reason||'';
+    const actionNote=action?`<div class="user-order-action-note">Customer · ${esc(action.action_type)}${action.reason?' · '+esc(action.reason):''}</div>`:'';
+    return `<article class="user-order-row"><div><strong>${esc(order.order_number||order.order_no||order.id)}</strong><small>${new Date(order.created_at).toLocaleString('en-PK')}</small></div><div><div class="workflow-badges">${orderStatusBadge(order.status)}${paymentStatusBadge(order.payment_status)}</div><small>${orderItemCount(order.id)} item${orderItemCount(order.id)===1?'':'s'} · ${esc(order.payment_method||'COD')}${reason?' · '+esc(reason):''}</small>${actionNote}</div><div class="order-value">${money(order.total)}</div><div class="row-actions"><button class="smallbtn workflow-button" type="button" data-manage-order="${esc(order.id)}">Manage</button><button class="smallbtn" type="button" data-inspect-order="${esc(order.id)}">Inspect</button></div></article>`;
+  }).join(''):'<div class="user-orders-empty">This registered user has not placed an order yet.</div>';
+  $('userOrdersModal').dataset.userId=String(user.id);
+  $('userOrdersModal').classList.add('open');
+  $('userOrdersModal').setAttribute('aria-hidden','false');
+}
 function closeUserOrders(){$('userOrdersModal')?.classList.remove('open');$('userOrdersModal')?.setAttribute('aria-hidden','true');}
 
 async function functionError(error){try{const body=await error?.context?.json();return body?.error||body?.message||error.message}catch{return error?.message||'The secure delete request failed.'}}
