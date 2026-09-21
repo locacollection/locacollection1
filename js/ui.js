@@ -53,7 +53,7 @@ function showNotice(options){
 function askNotice(options){
   if(siteNoticeResolver)closeNotice(false);
   const config=typeof options==='string'?{title:options}:options||{};
-  const layer=configureNotice({...config,action:config.action||'Confirm',secondaryAction:config.secondaryAction||'Keep'});
+  const layer=configureNotice({...config,action:config.action||config.confirm||'Confirm',secondaryAction:config.secondaryAction||'Keep'});
   layer.dataset.mode='confirm';
   openNotice(layer,'.site-notice-secondary');
   return new Promise(resolve=>{siteNoticeResolver=resolve});
