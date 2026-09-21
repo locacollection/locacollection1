@@ -192,3 +192,60 @@ footer{padding:60px clamp(18px,4vw,64px) 25px;background:var(--ink);color:#fff}.
 @media(prefers-reduced-motion:reduce){
   .account-section,.account-loading:after{animation:none!important}
 }
+
+
+/* Customer order actions */
+.account-status.order-return-requested{background:#f1e6d5;color:#8a622b}
+.account-status.payment-refund-pending{background:#eee3f0;color:#6d4778}
+.order-exception.is-return-requested{background:linear-gradient(135deg,#f5ebda,#fbf7ef);color:#7a5728;border:1px solid rgba(167,123,50,.16)}
+.customer-action-receipt{display:grid;grid-template-columns:minmax(120px,.75fr) minmax(0,1.25fr);gap:14px;margin-top:13px;padding:12px 14px;border:1px solid rgba(167,123,50,.14);border-radius:13px;background:rgba(244,237,224,.55)}
+.customer-action-receipt span,.customer-action-receipt b,.customer-action-receipt small{display:block}
+.customer-action-receipt span{color:var(--gold);font-size:7px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.customer-action-receipt b{margin-top:3px;font-size:10px}
+.customer-action-receipt>div:last-child{text-align:right}
+.customer-action-receipt small{color:var(--muted);font-size:8px}
+.customer-action-receipt p{margin:3px 0 0;color:#675f55;font-size:9px;line-height:1.5}
+.account-order-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:14px}
+.account-order-action{min-height:34px;padding:8px 12px;border:1px solid rgba(36,29,21,.14);border-radius:999px;background:#fffdf8;color:#514a42;font-size:8px;font-weight:800;letter-spacing:.065em;text-transform:uppercase;transition:transform .22s var(--ease),border-color .22s,background .22s,color .22s}
+.account-order-action:hover{transform:translateY(-2px);border-color:rgba(167,123,50,.5);background:#f8f0e4;color:#765528}
+.account-order-action.is-danger{border-color:rgba(145,61,58,.2);color:#8f3c38}
+.account-order-action.is-danger:hover{border-color:#913d3a;background:#f8e9e6;color:#7d312e}
+.account-order-action.is-positive{border-color:rgba(53,100,71,.22);color:#356447}
+.account-order-action.is-positive:hover{border-color:#356447;background:#e7f0e8;color:#274f37}
+.account-order-action.is-secondary{margin-left:auto;background:var(--ink);color:#fff}
+.account-order-action.is-secondary:hover{border-color:var(--wine);background:var(--wine);color:#fff}
+.account-order-action:disabled{cursor:wait;opacity:.55;transform:none}
+.customer-action-dialog{width:min(570px,calc(100% - 28px));max-height:92vh;padding:0;overflow:auto;border:1px solid rgba(225,199,157,.55);border-radius:27px;background:#fffaf3;color:var(--ink);box-shadow:0 38px 125px rgba(15,12,9,.42)}
+.customer-action-dialog[open]{animation:customerActionIn .42s var(--ease) both}
+.customer-action-dialog::backdrop{background:rgba(18,14,11,.68);backdrop-filter:blur(13px)}
+.customer-action-dialog form{display:grid;gap:15px;padding:34px}
+.customer-action-head{position:relative;display:flex;justify-content:space-between;gap:20px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.customer-action-head h2{font:500 clamp(33px,6vw,46px)/1.04 var(--serif);letter-spacing:-.04em}
+.customer-action-head>div>p:last-child{margin:11px 0 0;color:var(--muted);font-size:12px;line-height:1.65}
+.customer-action-dialog label{display:grid;gap:8px}
+.customer-action-dialog label>span{color:var(--muted);font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.customer-action-dialog select,.customer-action-dialog textarea{width:100%;border:1px solid var(--line);border-radius:14px;background:#fff;padding:13px 14px;color:var(--ink);outline:0;transition:border-color .2s,box-shadow .2s}
+.customer-action-dialog textarea{min-height:104px;resize:vertical}
+.customer-action-dialog select:focus,.customer-action-dialog textarea:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(167,123,50,.1)}
+.customer-action-order{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:14px 16px;border-radius:15px;background:linear-gradient(135deg,#f3eadc,#faf6ef)}
+.customer-action-order>span{font-size:11px;font-weight:800}
+.customer-action-order>strong{margin-left:auto;font:600 17px/1 var(--serif)}
+.customer-action-guidance{display:grid;grid-template-columns:25px minmax(0,1fr);gap:10px;padding:13px 15px;border:1px solid rgba(167,123,50,.15);border-radius:14px;background:rgba(231,216,184,.15);color:#746653}
+.customer-action-guidance svg{width:17px;height:17px;color:var(--gold)}
+.customer-action-guidance p{margin:0;font-size:10px;line-height:1.6}
+#orderActionMessage{min-height:17px;margin:0;color:var(--green);font-size:10px;font-weight:700}
+#orderActionMessage.error{color:#9a3f39}
+.customer-action-buttons{display:flex;justify-content:flex-end;gap:9px;padding-top:3px}
+.customer-action-buttons .button{min-width:145px}
+@keyframes customerActionIn{from{opacity:0;transform:translateY(20px) scale(.975)}to{opacity:1;transform:none}}
+@media(max-width:560px){
+  .customer-action-dialog{width:calc(100% - 16px);max-height:94vh;border-radius:23px}
+  .customer-action-dialog form{padding:27px 20px 22px}
+  .customer-action-head h2{font-size:34px}
+  .customer-action-buttons{display:grid;grid-template-columns:1fr}
+  .customer-action-buttons .button{width:100%}
+  .customer-action-receipt{grid-template-columns:1fr}
+  .customer-action-receipt>div:last-child{text-align:left}
+  .account-order-action.is-secondary{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){.customer-action-dialog[open]{animation:none}}
