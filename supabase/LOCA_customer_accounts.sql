@@ -496,6 +496,14 @@ create table if not exists public.order_customer_actions (
     check (note is null or char_length(note) <= 500)
 );
 
+alter table public.order_customer_actions
+  alter column user_id drop not null;
+alter table public.order_customer_actions
+  drop constraint if exists order_customer_actions_user_id_fkey;
+alter table public.order_customer_actions
+  add constraint order_customer_actions_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete set null;
+
 create index if not exists order_customer_actions_order_created_idx
   on public.order_customer_actions(order_id, created_at desc);
 create index if not exists order_customer_actions_user_idx
