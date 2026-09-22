@@ -20,10 +20,10 @@ const money = value => `PKR ${Number(value || 0).toLocaleString('en-PK')}`;
 function render() {
   const query = search.value.trim().toLowerCase();
   const visible = products.filter(product => (activeCategory === 'All' || product.category === activeCategory) && `${product.name} ${product.category} ${product.description || ''}`.toLowerCase().includes(query));
-  count.textContent = `${visible.length} product${visible.length === 1 ? '' : 's'} · read-only preview`;
+  count.textContent = `${visible.length} product${visible.length === 1 ? '' : 's'} in the current edit`;
   grid.innerHTML = visible.length ? visible.map((product, index) => `<article class="admin-preview-card">
     <div class="admin-preview-card-top"><span class="admin-preview-card-index">${String(index + 1).padStart(2, '0')}</span><img class="admin-preview-image" src="${escapeHtml(imageUrl(product.image_url))}" alt="${escapeHtml(product.name)}" loading="lazy"></div>
-    <div class="admin-preview-copy"><small>${escapeHtml(product.category || 'LOCA collection')}</small><h2>${escapeHtml(product.name)}</h2><p>${escapeHtml(product.description || 'No product description yet.')}</p><strong class="admin-preview-price">${money(product.price)}</strong><div class="admin-preview-actions"><button class="admin-preview-pill admin-preview-edit" type="button" data-preview-product="${escapeHtml(product.id)}">Inspect details</button><a class="admin-preview-pill admin-preview-edit" href="admin.html?editProduct=${encodeURIComponent(product.id)}">Edit in Admin Studio</a></div></div>
+    <div class="admin-preview-copy"><small>${escapeHtml(product.category || 'LOCA collection')}</small><h2>${escapeHtml(product.name)}</h2><p>${escapeHtml(product.description || 'No product description yet.')}</p><strong class="admin-preview-price">${money(product.price)}</strong><div class="admin-preview-actions"><button class="admin-preview-pill admin-preview-edit" type="button" data-preview-product="${escapeHtml(product.id)}">Quick view</button><a class="admin-preview-pill admin-preview-edit" href="admin.html?editProduct=${encodeURIComponent(product.id)}">Edit</a></div></div>
   </article>`).join('') : '<p class="admin-preview-empty">No active products match this search.</p>';
 }
 
