@@ -1,73 +1,94 @@
 import { supabase } from './supabaseClient.js';
 import { adminGuardReady } from './admin-guard.js';
 
-const grid = document.getElementById('catalogueGrid');
-const search = document.getElementById('catalogueSearch');
-const count = document.getElementById('catalogueCount');
-const identity = document.getElementById('adminIdentity');
-const detail = document.getElementById('productDetail');
-const detailBody = document.getElementById('productDetailBody');
-const filters = document.getElementById('catalogueFilters');
-const statProducts = document.getElementById('statProducts');
-const statCategories = document.getElementById('statCategories');
+const grid = document.getElementById('grid');
+const bestGrid = document.getElementById('bestGrid');
+const newGrid = document.getElementById('newGrid');
+const filters = document.getElementById('filters');
+const search = document.getElementById('productSearch');
+const sort = document.getElementById('sort');
+const count = document.getElementById('count');
+const detail = document.getElementById('productModal');
 let products = [];
-let activeCategory = 'All';
+let activeFilter = 'All';
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-const imageUrl = value => typeof value === 'string' && value ? value : 'assets/product-placeholder.svg';
 const money = value => `PKR ${Number(value || 0).toLocaleString('en-PK')}`;
+const image = value => typeof value === 'string' && value ? value : 'assets/product-placeholder.svg';
+const discount = product => product.old_price > product.price ? Math.round((product.old_price - product.price) / product.old_price * 100) : 0;
+
+function matches(product) {
+  const category = String(product.category || '').toLowerCase();
+  if (activeFilter !== 'All' && activeFilter !== 'Sale' && category !== activeFilter.toLowerCase()) return false;
+  if (activeFilter === 'Sale' && !discount(product)) return false;
+  const query = search.value.trim().toLowerCase();
+  return !query || `${product.name} ${product.category} ${product.description || ''}`.toLowerCase().includes(query);
+}
+
+function card(product) {
+  const sale = discount(product);
+  return `<article class="product" data-description="${escapeHtml(product.description || '')}">
+    <div class="pic"><button class="product-image-button" type="button" data-preview-product="${product.id}" aria-label="View ${escapeHtml(product.name)} details"><img loading="lazy" src="${escapeHtml(image(product.image_url))}" alt="${escapeHtml(product.name)}" onerror="this.onerror=null;this.src='assets/product-placeholder.svg'"></button><div class="product-badges">${product.is_new ? '<span class="badge new-badge">New arrival</span>' : ''}${sale ? `<span class="badge sale-badge">SAVE ${sale}%</span>` : ''}</div><button class="heart admin-edit-product" type="button" data-edit-product="${product.id}" aria-label="Edit ${escapeHtml(product.name)}">✎</button><button class="quick-view" type="button" data-preview-product="${product.id}">Quick view</button></div>
+    <div class="product-info"><div class="category-row"><span class="category">${escapeHtml(product.category || 'LOCA edit')}</span><span class="delivery-pill">LOCA edit</span></div><button class="product-title-button" type="button" data-preview-product="${product.id}"><h3>${escapeHtml(product.name)}</h3></button><div class="price">${money(product.price)}${sale ? `<span class="old">${money(product.old_price)}</span>` : ''}</div><button class="add admin-edit-product" type="button" data-edit-product="${product.id}"><span aria-hidden="true">✎</span> Edit in Admin Studio</button></div>
+  </article>`;
+}
 
 function render() {
-  const query = search.value.trim().toLowerCase();
-  const visible = products.filter(product => (activeCategory === 'All' || product.category === activeCategory) && `${product.name} ${product.category} ${product.description || ''}`.toLowerCase().includes(query));
-  count.textContent = `${visible.length} product${visible.length === 1 ? '' : 's'} in the current edit`;
-  grid.innerHTML = visible.length ? visible.map((product, index) => `<article class="admin-preview-card">
-    <div class="admin-preview-card-top"><span class="admin-preview-card-index">${String(index + 1).padStart(2, '0')}</span><img class="admin-preview-image" src="${escapeHtml(imageUrl(product.image_url))}" alt="${escapeHtml(product.name)}" loading="lazy"></div>
-    <div class="admin-preview-copy"><small>${escapeHtml(product.category || 'LOCA collection')}</small><h2>${escapeHtml(product.name)}</h2><p>${escapeHtml(product.description || 'No product description yet.')}</p><strong class="admin-preview-price">${money(product.price)}</strong><div class="admin-preview-actions"><button class="admin-preview-pill admin-preview-edit" type="button" data-preview-product="${escapeHtml(product.id)}">Quick view</button><a class="admin-preview-pill admin-preview-edit" href="admin.html?editProduct=${encodeURIComponent(product.id)}">Edit</a></div></div>
-  </article>`).join('') : '<p class="admin-preview-empty">No active products match this search.</p>';
+  let visible = products.filter(matches);
+  if (sort.value === 'low') visible = [...visible].sort((a, b) => a.price - b.price);
+  if (sort.value === 'high') visible = [...visible].sort((a, b) => b.price - a.price);
+  const featured = products.filter(product => discount(product) || product.is_new).slice(0, 4);
+  grid.innerHTML = visible.length ? visible.map(card).join('') : '<div class="search-empty"><h3>No matches just yet.</h3><p>Try another search or choose a different category.</p></div>';
+  bestGrid.innerHTML = featured.map(card).join('');
+  newGrid.innerHTML = products.filter(product => product.is_new).slice(0, 4).map(card).join('') || '<p class="catalog-empty">New arrivals are on their way.</p>';
+  count.textContent = `${visible.length} product${visible.length === 1 ? '' : 's'}${activeFilter === 'All' ? '' : ` · ${activeFilter}`}`;
 }
 
 function renderFilters() {
-  const categories = ['All', ...new Set(products.map(product => product.category).filter(Boolean))];
-  filters.innerHTML = categories.map(category => `<button class="admin-preview-filter${category === activeCategory ? ' is-active' : ''}" type="button" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>`).join('');
+  const categories = ['All', 'Sale', ...new Set(products.map(product => product.category).filter(Boolean))];
+  filters.innerHTML = `<div class="main-filters">${categories.map(category => `<button type="button" class="filter ${category === activeFilter ? 'active' : ''}" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>`).join('')}</div>`;
 }
 
-function showDetails(id) {
+function showProduct(id) {
   const product = products.find(item => String(item.id) === String(id));
   if (!product) return;
-  detailBody.innerHTML = `<p class="admin-preview-kicker">${escapeHtml(product.category || 'LOCA collection')}</p><h2>${escapeHtml(product.name)}</h2><p>${escapeHtml(product.description || 'No product description yet.')}</p><strong>${money(product.price)}</strong>`;
-  detail.showModal();
+  document.getElementById('productModalImage').src = image(product.image_url);
+  document.getElementById('productModalImage').alt = product.name;
+  document.getElementById('productModalCategory').textContent = `LOCA / ${product.category || 'COLLECTION'}`;
+  document.getElementById('productModalName').textContent = product.name;
+  document.getElementById('productModalPrice').innerHTML = `<strong>${money(product.price)}</strong>${discount(product) ? `<span>${money(product.old_price)}</span>` : ''}`;
+  document.getElementById('productModalDescription').textContent = product.description || 'A considered piece from the live LOCA collection.';
+  document.getElementById('productModalDetails').textContent = product.description || 'Detailed product information from the live catalogue.';
+  document.getElementById('productAddButton').textContent = 'Edit in Admin Studio';
+  document.getElementById('productAddButton').onclick = () => window.location.assign(`admin.html?editProduct=${encodeURIComponent(product.id)}`);
+  document.getElementById('productBuyButton').hidden = true;
+  document.querySelector('.product-quantity')?.setAttribute('hidden', '');
+  document.getElementById('productReviewForm')?.setAttribute('hidden', '');
+  detail.classList.add('open');
+  document.body.classList.add('lock');
 }
 
 async function start() {
-  const allowed = await adminGuardReady;
-  if (!allowed) return;
-  const { data: { user } = {} } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from('profiles').select('admin_identifier').eq('id', user.id).maybeSingle();
-  identity.textContent = profile?.admin_identifier || 'ADMIN_LOCA1';
-  const { data, error } = await supabase.from('products').select('id,name,category,price,image_url,description').eq('active', true).order('id');
-  if (error) {
-    grid.innerHTML = `<p class="admin-preview-empty admin-preview-error">${escapeHtml(error.message)}</p>`;
-    return;
-  }
+  if (!await adminGuardReady) return;
+  document.querySelector('.account-button')?.setAttribute('hidden', '');
+  document.querySelector('.bag-button')?.setAttribute('hidden', '');
+  document.querySelector('#accountModal')?.setAttribute('hidden', '');
+  document.querySelectorAll('#mainNav a[href*="admin.html"], footer a[href*="admin.html"]').forEach(link => link.remove());
+  const { data, error } = await supabase.from('products').select('id,name,category,price,old_price,image_url,description,is_new').eq('active', true).order('id');
+  if (error) { grid.innerHTML = `<p class="catalog-empty">${escapeHtml(error.message)}</p>`; return; }
   products = data || [];
-  statProducts.textContent = products.length;
-  statCategories.textContent = new Set(products.map(product => product.category).filter(Boolean)).size;
   renderFilters();
   render();
 }
 
+filters.addEventListener('click', event => { const button = event.target.closest('[data-category]'); if (!button) return; activeFilter = button.dataset.category; renderFilters(); render(); document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' }); });
 search.addEventListener('input', render);
-grid.addEventListener('click', event => {
-  const button = event.target.closest('[data-preview-product]');
-  if (button) showDetails(button.dataset.previewProduct);
+sort.addEventListener('change', render);
+document.addEventListener('click', event => {
+  const preview = event.target.closest('[data-preview-product]');
+  const edit = event.target.closest('[data-edit-product]');
+  if (preview) showProduct(preview.dataset.previewProduct);
+  if (edit) window.location.assign(`admin.html?editProduct=${encodeURIComponent(edit.dataset.editProduct)}`);
 });
-filters.addEventListener('click', event => {
-  const button = event.target.closest('[data-category]');
-  if (!button) return;
-  activeCategory = button.dataset.category;
-  renderFilters();
-  render();
-});
-document.getElementById('closeDetail').addEventListener('click', () => detail.close());
 start();
+window.closeProduct = () => { detail.classList.remove('open'); document.body.classList.remove('lock'); };
