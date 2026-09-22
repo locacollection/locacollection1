@@ -88,6 +88,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   font-weight:500;line-height:.98;letter-spacing:-.055em}
 .head-copy{color:#756d64;font-size:13px}
 .head-date{padding:10px 14px;border:1px solid var(--l-line);border-radius:999px;background:rgba(255,250,244,.72);color:#6f665e}
+.admin-create-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 22px;padding:20px;border:1px solid rgba(255,255,255,.72);border-radius:16px;background:rgba(255,250,244,.56);backdrop-filter:blur(18px)}
+.admin-create-form .field{margin:0}.admin-create-form small{display:block;margin-top:5px;color:#786f66;font-size:10px;font-weight:400}.admin-create-actions{display:flex;align-items:end;gap:8px}.admin-create-form #addAdminMessage{grid-column:1/-1;margin:0;color:var(--l-wine);font-size:12px}
+@media(max-width:900px){.admin-create-form{grid-template-columns:1fr 1fr}.admin-create-actions{align-items:center}}
+@media(max-width:600px){.admin-create-form{grid-template-columns:1fr}.admin-create-actions{align-items:stretch;flex-direction:column}}
 
 /* Glass operations layer: consistent depth without changing the LOCA palette. */
 :root{--admin-glass:rgba(255,250,244,.68);--admin-glass-strong:rgba(255,250,244,.9);--admin-blur:20px;--admin-radius:18px}
