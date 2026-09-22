@@ -59,21 +59,15 @@ function showProduct(id) {
   document.getElementById('productModalPrice').innerHTML = `<strong>${money(product.price)}</strong>${discount(product) ? `<span>${money(product.old_price)}</span>` : ''}`;
   document.getElementById('productModalDescription').textContent = product.description || 'A considered piece from the live LOCA collection.';
   document.getElementById('productModalDetails').textContent = product.description || 'Detailed product information from the live catalogue.';
-  document.getElementById('productAddButton').textContent = 'Edit in Admin Studio';
-  document.getElementById('productAddButton').onclick = () => window.location.assign(`admin.html?editProduct=${encodeURIComponent(product.id)}`);
-  document.getElementById('productBuyButton').hidden = true;
-  document.querySelector('.product-quantity')?.setAttribute('hidden', '');
-  document.getElementById('productReviewForm')?.setAttribute('hidden', '');
+  const editUrl = `admin.html?editProduct=${encodeURIComponent(product.id)}`;
+  document.getElementById('productEditButton').onclick = () => window.location.assign(editUrl);
+  document.getElementById('productAdminLink').href = editUrl;
   detail.classList.add('open');
   document.body.classList.add('lock');
 }
 
 async function start() {
   if (!await adminGuardReady) return;
-  document.querySelector('.account-button')?.remove();
-  document.querySelector('.bag-button')?.remove();
-  document.querySelector('#accountModal')?.setAttribute('hidden', '');
-  document.querySelectorAll('#mainNav a[href*="admin.html"], footer a[href*="admin.html"]').forEach(link => link.remove());
   const { data, error } = await supabase.from('products').select('id,name,category,price,old_price,image_url,description,is_new').eq('active', true).order('id');
   if (error) { grid.innerHTML = `<p class="catalog-empty">${escapeHtml(error.message)}</p>`; return; }
   products = data || [];
