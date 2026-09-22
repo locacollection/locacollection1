@@ -221,6 +221,22 @@ function populateProfileForm(){
   document.getElementById('accountMemberName').textContent=name;
   document.getElementById('accountMemberEmail').textContent=registered;
   document.getElementById('accountAvatar').textContent=initials(name);
+  const switcher=document.getElementById('accountSwitcher');
+  if(switcher)switcher.hidden=profile.role!=='admin';
+}
+
+async function switchAdminAccount(email){
+  if(LOCA.profile?.role!=='admin')return;
+  const password=window.prompt(`Enter the password for ${email}`);
+  if(!password)return;
+  try{
+    await LOCA.db.auth.signOut();
+    const{error}=await LOCA.db.auth.signInWithPassword({email,password});
+    if(error)throw error;
+    window.location.reload();
+  }catch(error){
+    LOCA.notice({eyebrow:'Account switcher',title:'Sign-in failed.',message:error.message||'Please check the password and try again.',tone:'error',action:'Close'});
+  }
 }
 
 function switchAccountSection(name='profile'){
@@ -320,4 +336,4 @@ LOCA.EMAIL_CONFIRMATION_URL=LOCA_EMAIL_CONFIRMATION_URL;
 LOCA.isVerifiedUser=isVerifiedUser;
 window.openAuth=openAuth;window.closeAuth=closeAuth;window.toggleAuthMode=toggleAuthMode;window.handleAuth=handleAuth;
 window.openVerificationPending=openVerificationPending;window.closeVerificationPending=closeVerificationPending;window.changeRegistrationEmail=changeRegistrationEmail;window.resendVerificationEmail=resendVerificationEmail;
-window.openAccount=openAccount;window.closeAccount=closeAccount;window.switchAccountSection=switchAccountSection;window.saveProfile=saveProfile;window.saveContactInfo=saveContactInfo;window.signOutCustomer=signOutCustomer;window.initAuth=initAuth;
+window.openAccount=openAccount;window.closeAccount=closeAccount;window.switchAccountSection=switchAccountSection;window.saveProfile=saveProfile;window.saveContactInfo=saveContactInfo;window.signOutCustomer=signOutCustomer;window.switchAdminAccount=switchAdminAccount;window.initAuth=initAuth;

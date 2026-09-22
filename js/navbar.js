@@ -1,27 +1,25 @@
 import { supabase } from "./supabaseClient.js";
 
 export async function updateNavbar() {
-  const adminLinks = document.querySelectorAll(".admin-only-link");
+  const adminLinks = document.querySelectorAll('.admin-only-link, a[href*="admin.html"]');
   if (!adminLinks.length) return;
 
-  adminLinks.forEach(link => {
-    link.style.display = "none";
-  });
-
   const { data: { session } = {}, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError || !session?.user) return;
+  let isAdmin = false;
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", session.user.id)
-    .maybeSingle();
+  if (!sessionError && session?.user) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", session.user.id)
+      .maybeSingle();
 
-  if (!profileError && profile?.role === "admin") {
-    adminLinks.forEach(link => {
-      link.style.display = "inline-block";
-    });
+    isAdmin = !profileError && profile?.role === "admin";
   }
+
+  adminLinks.forEach(link => {
+    link.style.setProperty('display', isAdmin ? 'inline-block' : 'none', 'important');
+  });
 }
 
 updateNavbar();

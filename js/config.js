@@ -5,7 +5,7 @@ LOCA.money = n => "PKR " + Number(n || 0).toLocaleString("en-PK");
 
 LOCA.SUPABASE_URL = "https://qvvrjogeqranowfseivh.supabase.co";
 LOCA.SUPABASE_KEY = "sb_publishable_IP9PzAVXsVwcqNWenmdmLg_ACtzSDMB";
-LOCA.db = supabase.createClient(LOCA.SUPABASE_URL, LOCA.SUPABASE_KEY);
+LOCA.db = supabase.createClient(LOCA.SUPABASE_URL, LOCA.SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
 LOCA.currentUser = null;
 LOCA.profile = null;
 LOCA.products = [];

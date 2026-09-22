@@ -8,10 +8,11 @@ export async function protectAdminRoute() {
     return false;
   }
 
+  const userId = session.user.id;
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", session.user.id)
+    .eq("id", userId)
     .maybeSingle();
 
   if (profileError || profile?.role !== "admin") {
