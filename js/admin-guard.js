@@ -15,7 +15,7 @@ export async function protectAdminRoute() {
     .eq("id", userId)
     .maybeSingle();
 
-  if (profileError || profile?.role !== "admin") {
+  if (profileError || !["admin", "super_admin"].includes(profile?.role)) {
     window.alert("Access restricted to administrators.");
     window.location.replace("index.html");
     return false;

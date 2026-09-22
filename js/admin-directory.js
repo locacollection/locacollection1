@@ -19,7 +19,7 @@
     panel.className = 'panel';
     panel.id = 'adminsSection';
     panel.style.display = 'none';
-    panel.innerHTML = '<div class="section-head"><div><p class="kicker">Access control</p><h2>Admins Desk</h2><p class="muted" id="adminsMessage">Administrators and studio access.</p></div><div class="toolbar-actions"><button class="btn btn-primary" type="button" id="addAdmin">＋ Add admin</button><button class="btn alt" type="button" id="refreshAdmins">↻ Refresh</button></div></div><form id="addAdminForm" class="admin-create-form" hidden><div class="field"><label for="newAdminName">Full name</label><input id="newAdminName" required maxlength="120"></div><div class="field"><label for="newAdminEmail">Admin email</label><input id="newAdminEmail" type="email" required autocomplete="off"></div><div class="field"><label for="newAdminPassword">Temporary password</label><input id="newAdminPassword" type="password" required minlength="8" autocomplete="new-password"><small>Share this securely and ask the administrator to change it after first sign-in.</small></div><div class="admin-create-actions"><button class="btn btn-primary" type="submit">Create admin</button><button class="btn alt" type="button" id="cancelAddAdmin">Cancel</button></div><p id="addAdminMessage" role="status"></p></form><div class="tablewrap"><table><thead><tr><th>ADMIN ID</th><th>EMAIL</th><th>JOINED DATE</th><th>ACTIONS</th></tr></thead><tbody id="adminsBody"></tbody></table></div>';
+    panel.innerHTML = '<div class="section-head"><div><p class="kicker">Access control</p><h2>Admins Desk</h2><p class="muted" id="adminsMessage">Administrators and studio access.</p></div><div class="toolbar-actions"><button class="btn btn-primary" type="button" id="addAdmin">＋ Invite account</button><button class="btn alt" type="button" id="refreshAdmins">↻ Refresh</button></div></div><form id="addAdminForm" class="admin-create-form" hidden><div class="field"><label for="newAdminEmail">Email address</label><input id="newAdminEmail" type="email" required autocomplete="off" placeholder="person@example.com"></div><div class="field"><label for="newAdminRole">Role</label><select id="newAdminRole"><option value="admin">Admin</option><option value="user">User</option></select></div><div class="admin-create-actions"><button class="btn btn-primary" type="submit">Send invitation</button><button class="btn alt" type="button" id="cancelAddAdmin">Cancel</button></div><p id="addAdminMessage" role="status"></p></form><div class="tablewrap"><table><thead><tr><th>ADMIN ID</th><th>EMAIL</th><th>JOINED DATE</th><th>ACTIONS</th></tr></thead><tbody id="adminsBody"></tbody></table></div>';
     usersPanel.parentNode.insertBefore(panel, usersPanel.nextSibling);
 
     tab.addEventListener('click', () => {
@@ -46,13 +46,13 @@
     const button = form.querySelector('button[type="submit"]');
     const message = document.getElementById('addAdminMessage');
     button.disabled = true;
-    button.textContent = 'Creating...';
+    button.textContent = 'Sending...';
     message.textContent = '';
     try {
       const { data: sessionData, error: sessionError } = await db.auth.getSession();
       if (sessionError || !sessionData.session?.access_token) throw sessionError || new Error('Your admin session has expired.');
       const { data, error } = await db.functions.invoke('admin-create-user', {
-        body: { email: document.getElementById('newAdminEmail').value.trim(), password: document.getElementById('newAdminPassword').value, full_name: document.getElementById('newAdminName').value.trim() },
+        body: { email: document.getElementById('newAdminEmail').value.trim(), role: document.getElementById('newAdminRole').value },
         headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
       });
       if (error) throw error;
@@ -60,13 +60,13 @@
       form.reset();
       form.hidden = true;
       await loadAdmins();
-      window.adminNotify?.(`${data.profile?.admin_identifier || 'New admin'} was created successfully.`, { title: 'Admin account created' });
+      window.adminNotify?.(`Invitation sent to ${data.email || 'the selected email'}.`, { title: 'Invitation sent' });
     } catch (error) {
       message.textContent = error.message || 'The admin account could not be created.';
       window.adminNotify?.(message.textContent, { title: 'Admin creation failed', tone: 'error' });
     } finally {
       button.disabled = false;
-      button.textContent = 'Create admin';
+      button.textContent = 'Send invitation';
     }
   }
 
@@ -75,7 +75,7 @@
     if (!body || !db) return;
     body.innerHTML = '<tr><td colspan="4" class="empty">Loading administrators...</td></tr>';
     try {
-      const { data, error } = await db.from('profiles').select('*').eq('role', 'admin').order('created_at', { ascending: true });
+      const { data, error } = await db.from('profiles').select('*').in('role', ['admin', 'super_admin']).order('created_at', { ascending: true });
       if (error) throw error;
       admins = data || [];
       renderAdmins();

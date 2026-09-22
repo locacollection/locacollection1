@@ -28,27 +28,25 @@ Deno.serve(async (request: Request) => {
 
     const { data: actor, error: actorError } = await adminClient.from("profiles").select("role").eq("id", authData.user.id).maybeSingle();
     if (actorError) throw actorError;
-    if (actor?.role !== "admin") return json({ error: "Admin access is required." }, 403);
+    if (!['admin', 'super_admin'].includes(actor?.role)) return json({ error: "Admin access is required." }, 403);
 
     const payload = await request.json().catch(() => ({}));
     const email = typeof payload?.email === "string" ? payload.email.trim().toLowerCase() : "";
-    const password = typeof payload?.password === "string" ? payload.password : "";
-    const fullName = typeof payload?.full_name === "string" ? payload.full_name.trim() : "";
+    const invitedRole = payload?.role === "admin" ? "admin" : "customer";
     if (!/^\S+@\S+\.\S+$/.test(email)) return json({ error: "Enter a valid email address." }, 400);
-    if (password.length < 8) return json({ error: "Admin passwords must contain at least 8 characters." }, 400);
-    if (!fullName) return json({ error: "Enter the administrator name." }, 400);
 
-    const { data: created, error: createError } = await adminClient.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: fullName } });
+    const redirectTo = "https://locacollection.github.io/locacollection1/verify.html";
+    const { data: created, error: createError } = await adminClient.auth.admin.inviteUserByEmail(email, { redirectTo, data: { invited_role: invitedRole } });
     if (createError) return json({ error: createError.message }, 400);
     if (!created.user) return json({ error: "The administrator account was not created." }, 500);
 
-    const { data: profile, error: profileError } = await adminClient.from("profiles").upsert({ id: created.user.id, email, contact_email: email, full_name: fullName, role: "admin" }, { onConflict: "id" }).select("id,email,full_name,role,admin_identifier,created_at").single();
+    const { data: profile, error: profileError } = await adminClient.from("profiles").upsert({ id: created.user.id, email, contact_email: email, role: invitedRole }, { onConflict: "id" }).select("id,email,full_name,role,admin_identifier,created_at").single();
     if (profileError) {
       await adminClient.auth.admin.deleteUser(created.user.id);
       throw profileError;
     }
 
-    return json({ success: true, profile });
+    return json({ success: true, email, role: invitedRole, profile });
   } catch (error) {
     console.error("admin-create-user", error);
     return json({ error: error instanceof Error ? error.message : "Administrator could not be created." }, 500);
