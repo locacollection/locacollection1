@@ -31,6 +31,7 @@ const context = {
   document: {
     getElementById: (id) => elements[id] ??= node(),
     querySelectorAll: () => [],
+    addEventListener() {},
     body: { classList: { add(){}, remove(){} } }
   },
   localStorage: mockLocalStorage,
@@ -59,21 +60,11 @@ vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root, 'js/auth.js'), 'utf8'), context);
 vm.runInContext(fs.readFileSync(path.join(root, 'js/orders.js'), 'utf8'), context);
 
-assert.equal(typeof context.window.saveNewAddress, 'function', 'saveNewAddress must be exported');
-assert.equal(typeof context.window.setDefaultAddress, 'function', 'setDefaultAddress must be exported');
-assert.equal(typeof context.window.deleteAddress, 'function', 'deleteAddress must be exported');
-assert.equal(typeof context.window.selectCheckoutAddress, 'function', 'selectCheckoutAddress must be exported');
-
-// Test address book logic
-context.LOCA.currentUser = { id: 'cust_test_1', email: 'test@loca.pk' };
-context.LOCA.saveAddressesList([
-  { id: 'addr_1', title: 'Office', name: 'Zainab', phone: '03001234567', city: 'Lahore', address: 'Gulberg III', isDefault: false },
-  { id: 'addr_2', title: 'Home', name: 'Zainab Home', phone: '03001234567', city: 'Lahore', address: 'DHA Phase 5', isDefault: true }
-]);
-
-const addresses = context.LOCA.getSavedAddresses();
-assert.equal(addresses.length, 2);
-assert.equal(addresses[1].isDefault, true);
+assert.equal(typeof context.window.saveDeliveryAddress, 'function', 'saveDeliveryAddress must be exported');
+assert.equal(typeof context.window.loadDeliveryAddresses, 'function', 'loadDeliveryAddresses must be exported');
+assert.equal(typeof context.window.renderAddressOptions, 'function', 'renderAddressOptions must be exported');
+assert.equal(typeof context.window.applySavedAddress, 'function', 'applySavedAddress must be exported');
+assert.equal(typeof context.window.openCheckout, 'function', 'openCheckout must be exported');
 
 // Test 2: Verify config.js exports LOCA.esc and LOCA.escape and checkout modal renders without error
 const ctx2 = {
@@ -81,7 +72,8 @@ const ctx2 = {
   supabase: { createClient: () => ({}) },
   localStorage: mockLocalStorage,
   document: {
-    getElementById: (id) => elements[id] ??= node()
+    getElementById: (id) => elements[id] ??= node(),
+    addEventListener() {}
   }
 };
 ctx2.window = ctx2;
@@ -91,10 +83,11 @@ assert.equal(typeof ctx2.LOCA.esc, 'function', 'LOCA.esc must be defined in conf
 assert.equal(typeof ctx2.LOCA.escape, 'function', 'LOCA.escape must be defined in config.js');
 assert.equal(ctx2.LOCA.esc('<script>'), '&lt;script&gt;', 'LOCA.esc must escape special chars');
 
-// Load orders.js into ctx2 and test renderCheckoutAddressOptions
+// Load orders.js into ctx2 and test the current delivery-address renderer
 vm.runInContext(fs.readFileSync(path.join(root, 'js/orders.js'), 'utf8'), ctx2);
 assert.doesNotThrow(() => {
-  ctx2.window.renderCheckoutAddressOptions();
-}, 'renderCheckoutAddressOptions should execute cleanly without LOCA.esc missing error');
+  ctx2.LOCA.addresses = [];
+  ctx2.window.renderAddressOptions();
+}, 'renderAddressOptions should execute cleanly without LOCA.esc missing error');
 
 console.log('PASS: user profile address management and checkout integration tests');

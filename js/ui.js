@@ -93,15 +93,32 @@ document.querySelectorAll('#mainNav a').forEach(link=>link.addEventListener('cli
   document.body.classList.remove('menu-open');
 }));
 
-function subscribe(event){
+async function subscribe(event){
   event.preventDefault();
   const form=event.currentTarget,msg=document.getElementById('msg');
-  if(msg){
-    msg.textContent="You're on the LOCA list. Watch for the next drop.";
-    msg.className='success-message';
-    msg.style.marginTop='16px';
+  if(!LOCA.currentUser){
+    openAuth('signup');
+    LOCA.notice({eyebrow:'The LOCA list',title:'Create an account to join.',message:'Your verified account email keeps subscriptions private and lets you manage your LOCA details in one place.',action:'Continue'});
+    return;
   }
-  form?.reset();
+  const input=form.querySelector('input[type="email"]'),registered=LOCA.currentUser.email||'',email=input?.value.trim().toLowerCase();
+  if(email!==registered.toLowerCase()){
+    LOCA.notice({eyebrow:'The LOCA list',title:'Use your registered email.',message:`Your signed-in LOCA email is ${registered}.`,tone:'error',action:'Update email'});
+    if(input)input.value=registered;
+    return;
+  }
+  const button=form.querySelector('button[type="submit"],button:not([type])');
+  if(button){button.disabled=true;button.textContent='Joining…';}
+  try{
+    const{error}=await LOCA.db.from('newsletter_subscriptions').upsert({user_id:LOCA.currentUser.id,email:registered,subscribed:true,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+    if(error)throw error;
+    if(msg){msg.textContent="You're on the LOCA list. Watch for the next drop.";msg.className='success-message';msg.style.marginTop='16px';}
+    form.reset();
+  }catch(error){
+    LOCA.notice({eyebrow:'The LOCA list',title:'You were not subscribed.',message:error.message||'Please try again in a moment.',tone:'error',action:'Try again'});
+  }finally{
+    if(button){button.disabled=false;button.textContent='Join LOCA ↗';}
+  }
 }
 
 function reveal(){
