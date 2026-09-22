@@ -38,6 +38,25 @@ footer{padding:60px clamp(18px,4vw,64px) 25px;background:var(--ink);color:#fff}.
 @media(max-width:560px){.site-notice-layer{align-items:end;padding:12px}.site-notice-window{padding:32px 25px 26px;border-radius:23px}.site-notice-window:before{border-radius:17px}.site-notice-window h2{font-size:34px}}
 @media(prefers-reduced-motion:reduce){.site-notice-layer,.site-notice-window,.site-notice-action,.site-notice-close{transition-duration:.01ms!important}}
 
+/* LOCA glass system: shared surfaces stay warm, readable, and layered. */
+:root{--glass-bg:rgba(255,253,248,.64);--glass-bg-strong:rgba(255,253,248,.84);--glass-dark:rgba(18,17,15,.78);--glass-border:rgba(255,255,255,.62);--glass-line:rgba(24,22,18,.12);--glass-blur:18px;--glass-radius:22px;--glass-shadow:0 24px 70px rgba(24,20,15,.12)}
+body{background:radial-gradient(circle at 8% 0,rgba(215,189,137,.18),transparent 28rem),radial-gradient(circle at 94% 35%,rgba(125,31,53,.08),transparent 34rem),var(--cream)}
+.site-header{background:rgba(244,241,234,.68);border-bottom-color:rgba(255,255,255,.72);box-shadow:0 8px 30px rgba(24,20,15,.05)}
+.nav-shell{height:74px}.nav-icon,.account-button,.bag-button,.menu-toggle{background:rgba(255,253,248,.32);border-color:rgba(255,255,255,.54)}
+.button,.filter,.sub-chip,.shop-tools select,.search-box,.admin-store-bridge{backdrop-filter:blur(12px) saturate(130%)}
+.button.quiet{background:rgba(255,253,248,.5);border-color:rgba(255,255,255,.75)}
+.benefits div,.category-card,.product .pic,.newsletter form{border:1px solid rgba(255,255,255,.6);box-shadow:var(--glass-shadow)}
+.benefits div{background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(125%)}
+.benefits div:hover{background:var(--glass-bg-strong)}
+.product .pic{box-shadow:0 18px 46px rgba(0,0,0,.18)}
+.product-info{padding:14px 3px 0}.product .add{border-radius:999px;background:rgba(255,253,248,.1);border:1px solid rgba(255,255,255,.2);transition:.25s var(--ease)}
+.product .add:hover{background:#fff;color:var(--ink);transform:translateY(-2px)}
+.modal-card,.checkout-card,.bag-drawer{border-color:var(--glass-border);background:var(--glass-bg-strong);backdrop-filter:blur(24px) saturate(135%);box-shadow:0 32px 100px rgba(15,12,9,.24)}
+.account-card{background:rgba(255,253,248,.82)}
+.newsletter{background:linear-gradient(135deg,rgba(252,251,247,.72),rgba(244,241,234,.88));border-top:1px solid rgba(255,255,255,.7);border-bottom:1px solid rgba(24,22,18,.07)}
+footer{background:linear-gradient(145deg,#161411,#211c18);border-top:1px solid rgba(215,189,137,.2)}
+@media(max-width:680px){.site-header{backdrop-filter:blur(20px) saturate(140%)}.benefits div{border-radius:18px}.modal-card,.checkout-card{backdrop-filter:blur(18px)}}
+
 
 /* Luxury member account — tabbed profile, orders, address book and contact details */
 ::selection{background:rgba(167,123,50,.22);color:var(--ink)}
