@@ -175,6 +175,11 @@ async function handleAuth(event){
     }
     clearPendingVerification();
     closeAuth();
+    const profile=await LOCA.ensureProfile();
+    if(profile?.role==='admin'){
+      window.location.assign('admin.html');
+      return;
+    }
   }catch(error){
     if(/email[^.]*not confirmed|confirm[^.]*email/i.test(error.message||'')){
       rememberPendingVerification(email);

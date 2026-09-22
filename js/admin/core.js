@@ -1,3 +1,5 @@
+document.getElementById("login")?.style.setProperty("display","none");
+document.querySelector('.store-link[href="index.html"]')?.removeAttribute('target');
 const SUPABASE_URL=(window.LOCA&&window.LOCA.SUPABASE_URL)||"https://qvvrjogeqranowfseivh.supabase.co";
 const SUPABASE_KEY=(window.LOCA&&window.LOCA.SUPABASE_KEY)||"sb_publishable_IP9PzAVXsVwcqNWenmdmLg_ACtzSDMB";
 const db=(window.LOCA&&window.LOCA.db)||supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
