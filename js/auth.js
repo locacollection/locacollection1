@@ -139,6 +139,7 @@ async function resendVerificationEmail(){
 
 async function handleAuth(event){
   event.preventDefault();
+  const authForm=event.currentTarget?.closest?.('form')||event.target?.closest?.('form')||document.getElementById('authForm');
   const email=document.getElementById('authEmail').value.trim().toLowerCase();
   const password=document.getElementById('authPassword').value;
   const name=document.getElementById('authName').value.trim();
@@ -156,7 +157,7 @@ async function handleAuth(event){
       if(error)throw error;
       if(!data.session||!isVerifiedUser(data.user)){
         rememberPendingVerification(email);
-        event.currentTarget.reset();
+        if(authForm&&typeof authForm.reset==='function')authForm.reset();
         openVerificationPending(email);
         return;
       }

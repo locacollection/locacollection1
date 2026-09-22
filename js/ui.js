@@ -113,7 +113,7 @@ async function subscribe(event){
     const{error}=await LOCA.db.from('newsletter_subscriptions').upsert({user_id:LOCA.currentUser.id,email:registered,subscribed:true,updated_at:new Date().toISOString()},{onConflict:'user_id'});
     if(error)throw error;
     if(msg){msg.textContent="You're on the LOCA list. Watch for the next drop.";msg.className='success-message';msg.style.marginTop='16px';}
-    form.reset();
+    if(form&&typeof form.reset==='function')form.reset();
   }catch(error){
     LOCA.notice({eyebrow:'The LOCA list',title:'You were not subscribed.',message:error.message||'Please try again in a moment.',tone:'error',action:'Try again'});
   }finally{
