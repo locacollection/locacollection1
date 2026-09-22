@@ -91,17 +91,13 @@
     button.className = 'btn alt';
     button.id = 'testModeBtn';
     button.type = 'button';
-    button.textContent = localStorage.getItem('loca_admin_test_mode') === 'true' ? 'Exit Test Mode' : 'Switch to Test Mode';
+    button.textContent = localStorage.getItem('loca_test_mode') === 'true' ? 'Exit Test Mode' : 'Switch to Test Mode';
     button.addEventListener('click', async () => {
-      const enabled = localStorage.getItem('loca_admin_test_mode') === 'true';
+      const next = localStorage.getItem('loca_test_mode') !== 'true';
+      localStorage.setItem('loca_test_mode', String(next));
       const { data: { session } = {} } = await db.auth.getSession();
-      if (!session?.user) return;
-      const next = !enabled;
-      const { error } = await db.from('profiles').update({ is_test_mode: next }).eq('id', session.user.id);
-      if (error) return window.adminNotify?.(error.message, { title: 'Test Mode unavailable', tone: 'error' });
-      localStorage.setItem('loca_admin_test_mode', String(next));
-      button.textContent = next ? 'Exit Test Mode' : 'Switch to Test Mode';
-      window.open('index.html', '_blank', 'noopener');
+      if (session?.user) db.from('profiles').update({ is_test_mode: next }).eq('id', session.user.id).catch(error => console.warn('Test Mode profile state could not be synced:', error));
+      window.location.assign(next ? 'index.html' : 'admin.html');
     });
     target.insertBefore(button, target.firstChild);
   }

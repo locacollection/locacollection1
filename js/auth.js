@@ -211,7 +211,7 @@ function initials(value){return String(value||'LOCA').trim().split(/\s+/).slice(
 function showInlineMessage(id,text){const box=document.getElementById(id);if(!box)return;box.textContent=text;box.hidden=false;setTimeout(()=>box.hidden=true,2600);}
 
 function populateProfileForm(){
-  const profile=LOCA.profile||{},registered=LOCA.currentUser?.email||profile.email||'',testMode=profile.role==='admin'&&(profile.is_test_mode===true||localStorage.getItem('loca_admin_test_mode')==='true'),identifier=profile.admin_identifier||'ADMIN_LOCA1',name=testMode?'ADMIN TEST MODE':(profile.full_name||registered.split('@')[0]||'LOCA member'),contact=profile.contact_email||registered;
+  const profile=LOCA.profile||{},registered=LOCA.currentUser?.email||profile.email||'',testMode=profile.role==='admin'&&(profile.is_test_mode===true||localStorage.getItem('loca_test_mode')==='true'),identifier=profile.admin_identifier||'ADMIN_LOCA1',name=testMode?'ADMIN TEST MODE':(profile.full_name||registered.split('@')[0]||'LOCA member'),contact=profile.contact_email||registered;
   document.getElementById('profileEmail').value=registered;
   document.getElementById('profileName').value=profile.full_name||'';
   document.getElementById('contactRegisteredEmail').value=registered;
@@ -227,26 +227,19 @@ function populateProfileForm(){
 
 async function toggleAdminTestMode(){
   if(LOCA.profile?.role!=='admin')return;
-  const enabled=LOCA.profile.is_test_mode===true||localStorage.getItem('loca_admin_test_mode')==='true';
-  const{error}=await LOCA.db.from('profiles').update({is_test_mode:!enabled}).eq('id',LOCA.currentUser.id);
-  if(error){LOCA.notice({eyebrow:'Test Mode',title:'Could not update Test Mode.',message:error.message,tone:'error',action:'Close'});return;}
-  LOCA.profile.is_test_mode=!enabled;
-  localStorage.setItem('loca_admin_test_mode',String(!enabled));
-  populateProfileForm();
+  const enabled=LOCA.profile.is_test_mode===true||localStorage.getItem('loca_test_mode')==='true';
+  const next=!enabled;
+  localStorage.setItem('loca_test_mode',String(next));
+  LOCA.db.from('profiles').update({is_test_mode:next}).eq('id',LOCA.currentUser.id).then(({error})=>{
+    if(error)console.warn('Test Mode profile state could not be synced:',error);
+  });
+  window.location.assign(next?'index.html':'admin.html');
 }
 
 async function switchAdminAccount(email){
   if(LOCA.profile?.role!=='admin')return;
-  const password=window.prompt(`Enter the password for ${email}`);
-  if(!password)return;
-  try{
-    await LOCA.db.auth.signOut();
-    const{error}=await LOCA.db.auth.signInWithPassword({email,password});
-    if(error)throw error;
-    window.location.reload();
-  }catch(error){
-    LOCA.notice({eyebrow:'Account switcher',title:'Sign-in failed.',message:error.message||'Please check the password and try again.',tone:'error',action:'Close'});
-  }
+  localStorage.setItem('loca_test_mode','true');
+  window.location.assign('index.html');
 }
 
 function switchAccountSection(name='profile'){

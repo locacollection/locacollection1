@@ -2,7 +2,6 @@ const SUPABASE_URL=(window.LOCA&&window.LOCA.SUPABASE_URL)||"https://qvvrjogeqra
 const SUPABASE_KEY=(window.LOCA&&window.LOCA.SUPABASE_KEY)||"sb_publishable_IP9PzAVXsVwcqNWenmdmLg_ACtzSDMB";
 const db=(window.LOCA&&window.LOCA.db)||supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 import("../admin-guard.js").catch(error=>console.warn("Admin route guard could not start:",error));
-import("../admin-directory.js").catch(error=>console.warn("Admin directory could not start:",error));
 let orders=[],customers=[],profiles=[],orderItems=[],products=[],orderActions=[];let activeCustomer=null,customerLoadError=null;
 const money=value=>"PKR "+Number(value||0).toLocaleString("en-PK");
 const esc=value=>String(value??"").replace(/[&<>\"]/g,x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;"}[x]));
