@@ -50,9 +50,15 @@ create or replace function public.sync_auth_user_profile()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = ''
 as $$
 begin
+  -- Supabase must keep a private auth.users row while the confirmation token is
+  -- outstanding. Do not turn that pending record into a LOCA customer profile.
+  if new.email_confirmed_at is null then
+    return new;
+  end if;
+
   insert into public.profiles (id, email, contact_email, full_name, updated_at)
   values (
     new.id,
@@ -75,8 +81,18 @@ $$;
 
 drop trigger if exists loca_sync_auth_profile on auth.users;
 create trigger loca_sync_auth_profile
-after insert or update of email, raw_user_meta_data on auth.users
+after insert or update of email, email_confirmed_at, raw_user_meta_data on auth.users
 for each row execute procedure public.sync_auth_user_profile();
+
+revoke all on function public.sync_auth_user_profile() from public;
+revoke all on function public.sync_auth_user_profile() from anon;
+revoke all on function public.sync_auth_user_profile() from authenticated;
+
+-- Profiles are created by the verified-email trigger, never directly by a
+-- pending browser session.
+drop policy if exists profiles_insert_own on public.profiles;
+revoke insert on table public.profiles from anon;
+revoke insert on table public.profiles from authenticated;
 
 insert into public.profiles (id, email, contact_email, full_name)
 select
@@ -85,6 +101,7 @@ select
   email,
   coalesce(raw_user_meta_data ->> 'full_name', '')
 from auth.users
+where email_confirmed_at is not null
 on conflict (id) do update
 set email = excluded.email,
     contact_email = coalesce(nullif(public.profiles.contact_email, ''), excluded.contact_email);

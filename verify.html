@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#2a1918">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Verify your LOCA account</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/verify.css?v=20260922-1">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body>
+  <main class="verification-shell">
+    <a class="verification-brand" href="./" aria-label="Return to LOCA Collection"><strong>LOCA</strong><span>COLLECTION</span></a>
+    <section class="verification-card" aria-live="polite">
+      <aside class="verification-art" aria-hidden="true">
+        <span class="art-index">ACCOUNT / 01</span>
+        <div class="art-copy">A private<br><em>wardrobe,</em><br>verified.</div>
+        <div class="art-seal"><span>LOCA</span><small>SECURE EMAIL</small></div>
+      </aside>
+      <div class="verification-content">
+        <p class="verification-eyebrow" id="verificationEyebrow">Secure registration</p>
+        <div class="verification-mark is-working" id="verificationMark" aria-hidden="true"><span class="verification-spinner"></span><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></div>
+        <h1 id="verificationTitle">Verifying your email.</h1>
+        <p class="verification-message" id="verificationMessage">We are validating the secure link and preparing your LOCA account. Keep this page open for a moment.</p>
+        <div class="verification-progress" id="verificationProgress"><span></span></div>
+        <div class="verified-account" id="verifiedAccount" hidden><span>Verified account</span><strong id="verifiedEmail"></strong></div>
+        <div class="verification-actions">
+          <a class="verification-primary" id="verificationContinue" href="./?auth=signin" hidden>Continue to LOCA <span>↗</span></a>
+          <button class="verification-secondary" id="verificationResend" type="button" hidden>Resend verification email</button>
+        </div>
+        <p class="verification-status" id="verificationStatus">Checking the confirmation token…</p>
+        <div class="verification-security"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Your customer profile is created only after this email check succeeds.</span></div>
+      </div>
+    </section>
+    <p class="verification-foot">© 2026 LOCA Collection · Secure account verification</p>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=verification-20260922-1"></script>
+  <script src="js/verify.js?v=verification-20260922-1"></script>
+</body>
+</html>
