@@ -34,6 +34,8 @@ export async function updateNavbar() {
     accountButton.setAttribute('aria-label', `Admin identity ${adminIdentifier}`);
     accountButton.innerHTML = `<span>${adminIdentifier}</span>`;
   }
+  const bagButton = document.querySelector('.bag-button');
+  if (bagButton) bagButton.style.setProperty('display', isAdmin ? 'none' : 'flex', 'important');
 
   if (isAdmin && !document.getElementById('adminBridge')) {
     const bridge = document.createElement('a');
@@ -49,3 +51,7 @@ export async function updateNavbar() {
 }
 
 updateNavbar();
+
+window.openAdminProductEditor = function(productId) {
+  window.location.assign(`admin.html?editProduct=${encodeURIComponent(productId)}`);
+};

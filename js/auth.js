@@ -290,7 +290,7 @@ async function handleSession(session){
   LOCA.currentUser=session?.user||null;LOCA.profile=null;LOCA.addresses=[];renderAccountHeader();
   if(LOCA.currentUser){
     clearPendingVerification();
-    try{await LOCA.ensureProfile();await LOCA.loadCart({mergeGuest:true});}
+    try{await LOCA.ensureProfile();await LOCA.loadCart({mergeGuest:true});window.render?.();}
     catch(error){console.warn('Account setup failed',error);await LOCA.loadCart();}
   }else await LOCA.loadCart();
 }

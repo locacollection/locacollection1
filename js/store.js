@@ -18,21 +18,21 @@ LOCA.safeImage=value=>{
 };
 
 LOCA.productCard=function(p){
-  const escape=LOCA.escape,id=Number(p.id),discount=p.old&&p.old>p.price?Math.round((p.old-p.price)/p.old*100):0;
+  const escape=LOCA.escape,id=Number(p.id),discount=p.old&&p.old>p.price?Math.round((p.old-p.price)/p.old*100):0,admin=LOCA.profile?.role==='admin';
   return `<article class="product" data-description="${escape(p.description||'')}">
     <div class="pic">
       <button class="product-image-button" type="button" onclick="openProduct(${id})" aria-label="View ${escape(p.name)} details">
         <img loading="lazy" src="${escape(LOCA.safeImage(p.image))}" alt="${escape(p.name)}" onerror="this.onerror=null;this.src='assets/product-placeholder.svg'">
       </button>
       <div class="product-badges">${p.new?'<span class="badge new-badge">New arrival</span>':''}${discount>0?`<span class="badge sale-badge">SAVE ${discount}%</span>`:''}</div>
-      <button class="heart" type="button" aria-label="Add ${escape(p.name)} to bag" onclick="add(${id})">＋</button>
+      ${admin?`<button class="heart admin-edit-product" type="button" aria-label="Edit ${escape(p.name)}" onclick="openAdminProductEditor(${id})">✎</button>`:`<button class="heart" type="button" aria-label="Add ${escape(p.name)} to bag" onclick="add(${id})">＋</button>`}
       <button class="quick-view" type="button" onclick="openProduct(${id})">Quick view</button>
     </div>
     <div class="product-info">
       <div class="category-row"><span class="category">${escape(p.cat||'LOCA edit')}</span><span class="delivery-pill">COD in PK</span></div>
       <button class="product-title-button" type="button" onclick="openProduct(${id})"><h3>${escape(p.name)}</h3></button>
       <div class="price">${LOCA.money(p.price)}${p.old&&p.old>p.price?`<span class="old">${LOCA.money(p.old)}</span>`:''}</div>
-      <button class="add" type="button" onclick="add(${id})"><span aria-hidden="true">＋</span> Add to bag</button>
+      ${admin?`<button class="add admin-edit-product" type="button" onclick="openAdminProductEditor(${id})"><span aria-hidden="true">✎</span> Edit in Admin Studio</button>`:`<button class="add" type="button" onclick="add(${id})"><span aria-hidden="true">＋</span> Add to bag</button>`}
     </div>
   </article>`;
 };

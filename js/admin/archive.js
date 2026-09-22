@@ -17,6 +17,22 @@
       const itemCount=archivedItems(record).reduce((sum,item)=>sum+Number(item.quantity||item.qty||0),0);
       return `<article class="archive-card"><div class="archive-card-top"><div><p class="kicker">Archived order</p><h3>${clean(record.order_number||record.original_order_id)}</h3><span>${new Date(record.archived_at).toLocaleString('en-PK')}</span></div><div class="archive-workflow">${orderStatusBadge(record.status)}${paymentStatusBadge(record.payment_status)}</div></div><div class="archive-facts"><div><span>Customer</span><strong>${clean(record.customer_name||'Unnamed customer')}</strong><small>${clean(record.customer_email||'No email')}</small></div><div><span>Order</span><strong>${itemCount} item${itemCount===1?'':'s'}</strong><small>${new Date(record.ordered_at||record.archived_at).toLocaleDateString('en-PK')}</small></div><div><span>Value</span><strong>${money(record.total)}</strong><small>${clean(record.payment_method||'Payment not recorded')}</small></div></div>${record.archive_reason?`<p class="archive-note"><b>Archive note</b>${clean(record.archive_reason)}</p>`:''}<div class="archive-actions"><button class="smallbtn" type="button" data-inspect-archive="${clean(record.id)}">Inspect snapshot</button><button class="smallbtn danger-action" type="button" data-delete-archive="${clean(record.id)}">Delete forever</button></div></article>`;
     }).join(''):'<div class="archive-empty"><div>◇</div><h3>The Order Archive is empty.</h3><p>Orders removed from the live workflow will appear here with their customer, items and activity snapshot.</p></div>';
+    $('archiveBody').querySelectorAll('.archive-card').forEach(card=>{const recordId=card.querySelector('[data-delete-archive]')?.dataset.deleteArchive;if(recordId&&!card.querySelector('[data-archive-select]')){const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.dataset.archiveSelect=recordId;checkbox.setAttribute('aria-label','Select archived order');card.prepend(checkbox)}});
+  }
+
+  function ensureBulkArchiveControls(){
+    const head=document.querySelector('#archiveSection .section-head .toolbar-actions');
+    if(!head||head.querySelector('[data-delete-selected-archive]'))return;
+    const selectAll=document.createElement('button');selectAll.className='btn alt';selectAll.type='button';selectAll.textContent='Select all';selectAll.dataset.selectAllArchive='';
+    const deleteSelected=document.createElement('button');deleteSelected.className='btn danger';deleteSelected.type='button';deleteSelected.textContent='Delete selected';deleteSelected.dataset.deleteSelectedArchive='';
+    const deleteAll=document.createElement('button');deleteAll.className='btn danger';deleteAll.type='button';deleteAll.textContent='Delete all';deleteAll.dataset.deleteAllArchive='';
+    head.append(selectAll,deleteSelected,deleteAll);
+  }
+
+  async function bulkDeleteArchived(ids){
+    if(!ids.length)return;
+    const approved=await confirmAction({eyebrow:'Permanent deletion',title:`Delete ${ids.length} archived order${ids.length===1?'':'s'}?`,message:'These archive records will be permanently erased and cannot be recovered.',confirmLabel:'Delete forever'});if(!approved)return;
+    try{if(!await isCurrentUserAdmin())throw new Error('Your admin session has expired.');for(const id of ids){const{error}=await db.rpc('admin_permanently_delete_archived_order',{p_archive_id:id});if(error)throw error}archivedOrders=archivedOrders.filter(record=>!ids.includes(String(record.id)));renderArchivedOrders();adminNotify(`${ids.length} archived order${ids.length===1?'':'s'} deleted.`,{title:'Archive updated'})}catch(error){adminNotify(error.message||'Selected archive records could not be deleted.',{title:'Bulk deletion failed',tone:'error'})}
   }
 
   async function loadArchivedOrders({quiet=false}={}){
@@ -110,6 +126,8 @@
 
   $('archiveSearch')?.addEventListener('input',renderArchivedOrders);
   $('archiveBody')?.addEventListener('click',event=>{const inspect=event.target.closest('[data-inspect-archive]');if(inspect)return viewArchivedOrder(inspect.dataset.inspectArchive);const remove=event.target.closest('[data-delete-archive]');if(remove)return permanentlyDeleteArchivedOrder(remove.dataset.deleteArchive)});
+  ensureBulkArchiveControls();
+  document.querySelector('#archiveSection .toolbar-actions')?.addEventListener('click',event=>{if(event.target.closest('[data-select-all-archive]')){$('archiveBody').querySelectorAll('[data-archive-select]').forEach(input=>{input.checked=true})}if(event.target.closest('[data-delete-selected-archive]'))bulkDeleteArchived([...$('archiveBody').querySelectorAll('[data-archive-select]:checked')].map(input=>input.dataset.archiveSelect));if(event.target.closest('[data-delete-all-archive]'))bulkDeleteArchived(archivedOrders.map(record=>String(record.id)))});
   $('modalBody')?.addEventListener('click',event=>{const remove=event.target.closest('[data-delete-archive]');if(remove)return permanentlyDeleteArchivedOrder(remove.dataset.deleteArchive)});
   $('archiveOrderForm')?.addEventListener('submit',submitArchiveOrder);
   $('closeArchiveOrder')?.addEventListener('click',closeArchiveDialog);
