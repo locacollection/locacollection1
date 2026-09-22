@@ -211,18 +211,28 @@ function initials(value){return String(value||'LOCA').trim().split(/\s+/).slice(
 function showInlineMessage(id,text){const box=document.getElementById(id);if(!box)return;box.textContent=text;box.hidden=false;setTimeout(()=>box.hidden=true,2600);}
 
 function populateProfileForm(){
-  const profile=LOCA.profile||{},registered=LOCA.currentUser?.email||profile.email||'',name=profile.full_name||registered.split('@')[0]||'LOCA member',contact=profile.contact_email||registered;
+  const profile=LOCA.profile||{},registered=LOCA.currentUser?.email||profile.email||'',testMode=profile.role==='admin'&&(profile.is_test_mode===true||localStorage.getItem('loca_admin_test_mode')==='true'),identifier=profile.admin_identifier||'ADMIN_LOCA1',name=testMode?'ADMIN TEST MODE':(profile.full_name||registered.split('@')[0]||'LOCA member'),contact=profile.contact_email||registered;
   document.getElementById('profileEmail').value=registered;
   document.getElementById('profileName').value=profile.full_name||'';
   document.getElementById('contactRegisteredEmail').value=registered;
   document.getElementById('contactEmail').value=contact;
   document.getElementById('contactPhone').value=profile.phone||'';
-  document.getElementById('accountIdentity').textContent=name+' · '+registered;
+  document.getElementById('accountIdentity').textContent=testMode?name+' · '+identifier:name+' · '+registered;
   document.getElementById('accountMemberName').textContent=name;
   document.getElementById('accountMemberEmail').textContent=registered;
   document.getElementById('accountAvatar').textContent=initials(name);
   const switcher=document.getElementById('accountSwitcher');
-  if(switcher)switcher.hidden=profile.role!=='admin';
+  if(switcher){switcher.hidden=profile.role!=='admin';if(profile.role==='admin'&&!switcher.querySelector('[data-test-mode]')){const button=document.createElement('button');button.type='button';button.dataset.testMode='';button.textContent=testMode?'Exit Test Mode':'Switch to Test Mode';button.addEventListener('click',toggleAdminTestMode);switcher.appendChild(button);}else{const button=switcher.querySelector('[data-test-mode]');if(button)button.textContent=testMode?'Exit Test Mode':'Switch to Test Mode';}}
+}
+
+async function toggleAdminTestMode(){
+  if(LOCA.profile?.role!=='admin')return;
+  const enabled=LOCA.profile.is_test_mode===true||localStorage.getItem('loca_admin_test_mode')==='true';
+  const{error}=await LOCA.db.from('profiles').update({is_test_mode:!enabled}).eq('id',LOCA.currentUser.id);
+  if(error){LOCA.notice({eyebrow:'Test Mode',title:'Could not update Test Mode.',message:error.message,tone:'error',action:'Close'});return;}
+  LOCA.profile.is_test_mode=!enabled;
+  localStorage.setItem('loca_admin_test_mode',String(!enabled));
+  populateProfileForm();
 }
 
 async function switchAdminAccount(email){

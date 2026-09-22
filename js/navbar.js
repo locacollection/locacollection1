@@ -20,6 +20,7 @@ export async function updateNavbar() {
   adminLinks.forEach(link => {
     link.style.setProperty('display', isAdmin ? 'inline-block' : 'none', 'important');
   });
+  document.body?.setAttribute('data-admin-test-mode', isAdmin && localStorage.getItem('loca_admin_test_mode') === 'true' ? 'true' : 'false');
 }
 
 updateNavbar();
