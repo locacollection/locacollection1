@@ -253,6 +253,8 @@ window.loadApprovedReviews=loadApprovedReviews;
 window.openStoreInfo=openStoreInfo;
 window.closeStoreInfo=closeStoreInfo;
 
+import('./navbar.js').catch(error=>console.warn('Navbar access check could not start:',error));
+
 document.addEventListener('DOMContentLoaded',async()=>{
   initExperience();
   try{
