@@ -17,9 +17,9 @@ function render() {
   const query = search.value.trim().toLowerCase();
   const visible = products.filter(product => `${product.name} ${product.category} ${product.description || ''}`.toLowerCase().includes(query));
   count.textContent = `${visible.length} product${visible.length === 1 ? '' : 's'} · read-only preview`;
-  grid.innerHTML = visible.length ? visible.map(product => `<article class="admin-preview-card">
-    <img class="admin-preview-image" src="${escapeHtml(imageUrl(product.image_url))}" alt="${escapeHtml(product.name)}" loading="lazy">
-    <div class="admin-preview-copy"><small>${escapeHtml(product.category || 'LOCA collection')}</small><h2>${escapeHtml(product.name)}</h2><p>${escapeHtml(product.description || 'No product description yet.')}</p><strong class="admin-preview-price">${money(product.price)}</strong><div class="admin-preview-actions"><button class="admin-preview-pill admin-preview-edit" type="button" data-preview-product="${escapeHtml(product.id)}">Inspect details</button><a class="admin-preview-pill admin-preview-edit" href="admin.html?editProduct=${encodeURIComponent(product.id)}">Edit in Admin Studio</a></div></div>
+  grid.innerHTML = visible.length ? visible.map(product => `<article class="preview-card">
+    <img class="preview-card-image" src="${escapeHtml(imageUrl(product.image_url))}" alt="${escapeHtml(product.name)}" loading="lazy">
+    <div class="preview-card-copy"><small>${escapeHtml(product.category || 'LOCA collection')}</small><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.description || 'No product description yet.')}</p><strong class="preview-price">${money(product.price)}</strong><div class="preview-actions"><button class="preview-action" type="button" data-preview-product="${escapeHtml(product.id)}">Inspect</button><a class="preview-action" href="admin.html?editProduct=${encodeURIComponent(product.id)}">Edit</a></div></div>
   </article>`).join('') : '<p class="admin-preview-empty">No active products match this search.</p>';
 }
 
@@ -38,10 +38,13 @@ async function start() {
   identity.textContent = profile?.admin_identifier || 'ADMIN_LOCA1';
   const { data, error } = await supabase.from('products').select('id,name,category,price,image_url,description').eq('active', true).order('id');
   if (error) {
-    grid.innerHTML = `<p class="admin-preview-empty admin-preview-error">${escapeHtml(error.message)}</p>`;
+    grid.innerHTML = `<p class="preview-empty">${escapeHtml(error.message)}</p>`;
     return;
   }
   products = data || [];
+  const hero = products.find(product => product.image_url)?.image_url;
+  const heroImage = document.getElementById('previewHeroImage');
+  if (heroImage) heroImage.src = imageUrl(hero);
   render();
 }
 
