@@ -1,5 +1,5 @@
 document.getElementById("login")?.style.setProperty("display","none");
-const storeBridge=document.querySelector('.store-link[href="index.html"]');if(storeBridge){storeBridge.href='admin-store.html';storeBridge.removeAttribute('target');}
+document.querySelectorAll('.store-link').forEach(storeBridge=>{storeBridge.href='admin-store.html';storeBridge.removeAttribute('target');});
 const requestedProductId=new URLSearchParams(window.location.search).get('editProduct');if(requestedProductId){const editTimer=setInterval(()=>{const editButton=document.querySelector(`[data-edit="${CSS.escape(requestedProductId)}"]`);if(editButton){document.querySelector('.tab[data-tab="products"]')?.click();editButton.click();clearInterval(editTimer)}},100);setTimeout(()=>clearInterval(editTimer),10000)}
 const SUPABASE_URL=(window.LOCA&&window.LOCA.SUPABASE_URL)||"https://qvvrjogeqranowfseivh.supabase.co";
 const SUPABASE_KEY=(window.LOCA&&window.LOCA.SUPABASE_KEY)||"sb_publishable_IP9PzAVXsVwcqNWenmdmLg_ACtzSDMB";
