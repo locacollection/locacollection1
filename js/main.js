@@ -257,6 +257,14 @@ import('./navbar.js').catch(error=>console.warn('Navbar access check could not s
 
 document.addEventListener('DOMContentLoaded',async()=>{
   initExperience();
+  const originalCheckout=window.openCheckout;
+  if(originalCheckout)window.openCheckout=async()=>{
+    if(LOCA.profile?.role==='admin'){
+      LOCA.notice?.({eyebrow:'Catalogue Preview Mode',title:'Checkout is disabled for admins.',message:'Admins can inspect the storefront but cannot place orders.',action:'Continue browsing'});
+      return;
+    }
+    return originalCheckout();
+  };
   try{
     LOCA.cart={};
     await loadProducts();

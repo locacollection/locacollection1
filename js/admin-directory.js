@@ -84,27 +84,8 @@
     }
   }
 
-  function addTestModeControl() {
-    const target = document.querySelector('.topright');
-    if (!target || document.getElementById('testModeBtn')) return;
-    const button = document.createElement('button');
-    button.className = 'btn alt';
-    button.id = 'testModeBtn';
-    button.type = 'button';
-    button.textContent = localStorage.getItem('loca_test_mode') === 'true' ? 'Exit Test Mode' : 'Switch to Test Mode';
-    button.addEventListener('click', async () => {
-      const next = localStorage.getItem('loca_test_mode') !== 'true';
-      localStorage.setItem('loca_test_mode', String(next));
-      const { data: { session } = {} } = await db.auth.getSession();
-      if (session?.user) db.from('profiles').update({ is_test_mode: next }).eq('id', session.user.id).catch(error => console.warn('Test Mode profile state could not be synced:', error));
-      window.location.assign(next ? 'index.html' : 'admin.html');
-    });
-    target.insertBefore(button, target.firstChild);
-  }
-
   const init = () => {
     addAdminDesk();
-    addTestModeControl();
     window.loadAdmins = loadAdmins;
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
