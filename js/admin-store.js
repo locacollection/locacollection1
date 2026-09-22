@@ -70,8 +70,8 @@ function showProduct(id) {
 
 async function start() {
   if (!await adminGuardReady) return;
-  document.querySelector('.account-button')?.setAttribute('hidden', '');
-  document.querySelector('.bag-button')?.setAttribute('hidden', '');
+  document.querySelector('.account-button')?.remove();
+  document.querySelector('.bag-button')?.remove();
   document.querySelector('#accountModal')?.setAttribute('hidden', '');
   document.querySelectorAll('#mainNav a[href*="admin.html"], footer a[href*="admin.html"]').forEach(link => link.remove());
   const { data, error } = await supabase.from('products').select('id,name,category,price,old_price,image_url,description,is_new').eq('active', true).order('id');
