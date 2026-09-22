@@ -1,11 +1,12 @@
 import { supabase } from "./supabaseClient.js";
 
 export async function updateNavbar() {
-  const adminLink = document.getElementById("admin-link") || document.querySelector(".admin-link");
-  if (!adminLink) return;
-  adminLink.id = "admin-link";
+  const adminLinks = document.querySelectorAll(".admin-only-link");
+  if (!adminLinks.length) return;
 
-  adminLink.style.display = "none";
+  adminLinks.forEach(link => {
+    link.style.display = "none";
+  });
 
   const { data: { session } = {}, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !session?.user) return;
@@ -17,7 +18,9 @@ export async function updateNavbar() {
     .maybeSingle();
 
   if (!profileError && profile?.role === "admin") {
-    adminLink.style.display = "inline-block";
+    adminLinks.forEach(link => {
+      link.style.display = "inline-block";
+    });
   }
 }
 

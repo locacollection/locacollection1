@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient.js";
 
-export async function guardAdminRoute() {
+export async function protectAdminRoute() {
   const { data: { session } = {}, error: sessionError } = await supabase.auth.getSession();
 
   if (sessionError || !session?.user) {
@@ -23,4 +23,4 @@ export async function guardAdminRoute() {
   return true;
 }
 
-export const adminGuardReady = guardAdminRoute();
+export const adminGuardReady = protectAdminRoute();
